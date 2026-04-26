@@ -1,0 +1,8 @@
+# Docs
+docs/
+
+# Dependencies
+node_modules/
+
+# Env
+.env
