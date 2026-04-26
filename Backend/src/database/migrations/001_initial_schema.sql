@@ -3,10 +3,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ENUMS
 CREATE TYPE business_type_enum AS ENUM (
-    'kuliner_rumahan',
-    'kuliner_kemasan',
-    'jasa_personal_care',
+    'kuliner',
     'fashion_craft',
+    'jasa_personal_care',
     'lainnya'
 );
 
@@ -30,7 +29,8 @@ CREATE TYPE step_type_enum AS ENUM (
     'spp_irt',
     'halal',
     'bpom',
-    'merek'
+    'merek',
+    'sertifikat_standar'
 );
 
 CREATE TYPE financial_type_enum AS ENUM (

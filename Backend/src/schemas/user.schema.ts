@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 
-const BUSINESS_TYPES = ['kuliner_rumahan', 'kuliner_kemasan', 'jasa_personal_care', 'fashion_craft', 'lainnya'] as const;
+const BUSINESS_TYPES = ['kuliner', 'fashion_craft', 'jasa_personal_care', 'lainnya'] as const;
 
 export const upsertBusinessProfileSchema = z.object({
     business_name:              z.string().min(2).optional(),
@@ -14,7 +14,7 @@ export const upsertBusinessProfileSchema = z.object({
     production_location:        z.string().optional(),
     employee_count:             z.number().int().min(1).optional(),
     monthly_revenue_estimate:   z.number().int().min(0).optional(),
-    // Formalization flags — bisa diupdate satu per satu seiring progres UMKM
+    // Formalization flags — can be updated one by one as UMKM progresses
     has_nib:                    z.boolean().optional(),
     has_pirt:                   z.boolean().optional(),
     has_halal:                  z.boolean().optional(),

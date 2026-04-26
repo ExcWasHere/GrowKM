@@ -14,6 +14,269 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_profiles: {
+        Row: {
+          business_name: string | null
+          business_type: Database["public"]["Enums"]["business_type_enum"]
+          city: string | null
+          created_at: string
+          description: string | null
+          district: string | null
+          employee_count: number
+          has_bpom: boolean
+          has_halal: boolean
+          has_merek: boolean
+          has_nib: boolean
+          has_pirt: boolean
+          id: string
+          kbli_code: string | null
+          level: Database["public"]["Enums"]["level_enum"]
+          monthly_revenue_estimate: number | null
+          onboarding_completed: boolean
+          production_location: string | null
+          province: string | null
+          score: number
+          streak_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name?: string | null
+          business_type: Database["public"]["Enums"]["business_type_enum"]
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          district?: string | null
+          employee_count?: number
+          has_bpom?: boolean
+          has_halal?: boolean
+          has_merek?: boolean
+          has_nib?: boolean
+          has_pirt?: boolean
+          id?: string
+          kbli_code?: string | null
+          level?: Database["public"]["Enums"]["level_enum"]
+          monthly_revenue_estimate?: number | null
+          onboarding_completed?: boolean
+          production_location?: string | null
+          province?: string | null
+          score?: number
+          streak_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string | null
+          business_type?: Database["public"]["Enums"]["business_type_enum"]
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          district?: string | null
+          employee_count?: number
+          has_bpom?: boolean
+          has_halal?: boolean
+          has_merek?: boolean
+          has_nib?: boolean
+          has_pirt?: boolean
+          id?: string
+          kbli_code?: string | null
+          level?: Database["public"]["Enums"]["level_enum"]
+          monthly_revenue_estimate?: number | null
+          onboarding_completed?: boolean
+          production_location?: string | null
+          province?: string | null
+          score?: number
+          streak_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          context_step_type:
+            | Database["public"]["Enums"]["step_type_enum"]
+            | null
+          created_at: string
+          id: string
+          messages: Json
+          session_type: Database["public"]["Enums"]["session_type_enum"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_step_type?:
+            | Database["public"]["Enums"]["step_type_enum"]
+            | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          session_type: Database["public"]["Enums"]["session_type_enum"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_step_type?:
+            | Database["public"]["Enums"]["step_type_enum"]
+            | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          session_type?: Database["public"]["Enums"]["session_type_enum"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_knowledge: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          domain: string
+          embedding: string | null
+          id: string
+          metadata: Json
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          domain: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          domain?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json
+          title?: string
+        }
+        Relationships: []
+      }
+      financial_records: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          id: string
+          product_name: string | null
+          profile_id: string
+          quantity: number | null
+          raw_input: string | null
+          record_date: string
+          type: Database["public"]["Enums"]["financial_type_enum"]
+          unit_price: number | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          product_name?: string | null
+          profile_id: string
+          quantity?: number | null
+          raw_input?: string | null
+          record_date?: string
+          type: Database["public"]["Enums"]["financial_type_enum"]
+          unit_price?: number | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          product_name?: string | null
+          profile_id?: string
+          quantity?: number | null
+          raw_input?: string | null
+          record_date?: string
+          type?: Database["public"]["Enums"]["financial_type_enum"]
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_records_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formalization_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_substep: number
+          id: string
+          is_required: boolean
+          profile_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["step_status_enum"]
+          step_order: number
+          step_type: Database["public"]["Enums"]["step_type_enum"]
+          total_substeps: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_substep?: number
+          id?: string
+          is_required?: boolean
+          profile_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["step_status_enum"]
+          step_order: number
+          step_type: Database["public"]["Enums"]["step_type_enum"]
+          total_substeps?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_substep?: number
+          id?: string
+          is_required?: boolean
+          profile_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["step_status_enum"]
+          step_order?: number
+          step_type?: Database["public"]["Enums"]["step_type_enum"]
+          total_substeps?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formalization_steps_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -35,93 +298,45 @@ export type Database = {
         }
         Relationships: []
       }
-      business_profiles: {
-        Row: {
-          id: string
-          user_id: string
-          business_name: string | null
-          business_type: 'kuliner_rumahan' | 'kuliner_kemasan' | 'jasa_personal_care' | 'fashion_craft' | 'lainnya'
-          kbli_code: string | null
-          description: string | null
-          province: string | null
-          city: string | null
-          district: string | null
-          production_location: string | null
-          employee_count: number
-          monthly_revenue_estimate: number | null
-          has_nib: boolean
-          has_pirt: boolean
-          has_halal: boolean
-          has_bpom: boolean
-          has_merek: boolean
-          level: 'starter' | 'growing' | 'established' | 'pro' | 'enterprise'
-          score: number
-          streak_days: number
-          onboarding_completed: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          business_name?: string | null
-          business_type: 'kuliner_rumahan' | 'kuliner_kemasan' | 'jasa_personal_care' | 'fashion_craft' | 'lainnya'
-          kbli_code?: string | null
-          description?: string | null
-          province?: string | null
-          city?: string | null
-          district?: string | null
-          production_location?: string | null
-          employee_count?: number
-          monthly_revenue_estimate?: number | null
-          has_nib?: boolean
-          has_pirt?: boolean
-          has_halal?: boolean
-          has_bpom?: boolean
-          has_merek?: boolean
-          level?: 'starter' | 'growing' | 'established' | 'pro' | 'enterprise'
-          score?: number
-          streak_days?: number
-          onboarding_completed?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          business_name?: string | null
-          business_type?: 'kuliner_rumahan' | 'kuliner_kemasan' | 'jasa_personal_care' | 'fashion_craft' | 'lainnya'
-          kbli_code?: string | null
-          description?: string | null
-          province?: string | null
-          city?: string | null
-          district?: string | null
-          production_location?: string | null
-          employee_count?: number
-          monthly_revenue_estimate?: number | null
-          has_nib?: boolean
-          has_pirt?: boolean
-          has_halal?: boolean
-          has_bpom?: boolean
-          has_merek?: boolean
-          level?: 'starter' | 'growing' | 'established' | 'pro' | 'enterprise'
-          score?: number
-          streak_days?: number
-          onboarding_completed?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_knowledge: {
+        Args: {
+          match_count?: number
+          match_domain?: string
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          category: string
+          content: string
+          domain: string
+          id: string
+          similarity: number
+          title: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      business_type_enum:
+        | "kuliner"
+        | "fashion_craft"
+        | "jasa_personal_care"
+        | "lainnya"
+      financial_type_enum: "income" | "expense"
+      level_enum: "starter" | "growing" | "established" | "pro" | "enterprise"
+      session_type_enum: "onboarding" | "copilot" | "financial_parser"
+      step_status_enum: "locked" | "unlocked" | "in_progress" | "completed"
+      step_type_enum:
+        | "nib"
+        | "spp_irt"
+        | "halal"
+        | "bpom"
+        | "merek"
+        | "sertifikat_standar"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -248,6 +463,25 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      business_type_enum: [
+        "kuliner",
+        "fashion_craft",
+        "jasa_personal_care",
+        "lainnya",
+      ],
+      financial_type_enum: ["income", "expense"],
+      level_enum: ["starter", "growing", "established", "pro", "enterprise"],
+      session_type_enum: ["onboarding", "copilot", "financial_parser"],
+      step_status_enum: ["locked", "unlocked", "in_progress", "completed"],
+      step_type_enum: [
+        "nib",
+        "spp_irt",
+        "halal",
+        "bpom",
+        "merek",
+        "sertifikat_standar",
+      ],
+    },
   },
 } as const
