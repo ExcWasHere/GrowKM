@@ -1,13 +1,17 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import Navbar from "../common/landing/navbar";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Arsana | Home" },
+    { name: "Home", content: "Welcome to Arsana!" },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <div>
+      <Navbar />
+    </div>
+  );
 }
