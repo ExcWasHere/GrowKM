@@ -1,10 +1,10 @@
-import { Database } from '../types/database.types';
+import { Database } from '../../types/database.types';
 
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
-type StepType = Database['public']['Tables']['formalization_steps']['Insert']['step_type'];
-type StepStatus = Database['public']['Tables']['formalization_steps']['Insert']['status'];
+export type StepType = Database['public']['Tables']['formalization_steps']['Insert']['step_type'];
+export type StepStatus = Database['public']['Tables']['formalization_steps']['Insert']['status'];
 
-type RoadmapStep = {
+export type RoadmapStep = {
     step_type: StepType;
     step_order: number;
     is_required: boolean;

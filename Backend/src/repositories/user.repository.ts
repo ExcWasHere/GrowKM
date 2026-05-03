@@ -57,3 +57,20 @@ export const upsertBusinessProfile = async (
 
     return data;
 };
+
+// Confirm and save KBLI code after user approves the AI recommendation (Condition A)
+export const confirmKbliCode = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    kbliCode: string,
+) => {
+    const { data, error } = await supabase
+        .from('business_profiles')
+        .update({ kbli_code: kbliCode })
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    if (error) throw new Error(`Failed to confirm KBLI code: ${error.message}`);
+    return data;
+};

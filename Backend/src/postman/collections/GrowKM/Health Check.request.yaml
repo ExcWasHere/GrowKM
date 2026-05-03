@@ -1,5 +1,0 @@
-$kind: http-request
-name: Health Check
-url: ""
-method: GET
-order: 4502537592950667

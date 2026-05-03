@@ -1,5 +1,0 @@
-$kind: http-request
-name: Me
-url: ""
-method: GET
-order: 4070203374317798
