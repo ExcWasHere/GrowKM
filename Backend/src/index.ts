@@ -43,4 +43,6 @@ app.get('/health', (c) => {
     return c.json({ status: 'ok', message: 'GrowKM API is running' });
 });
 
+console.log('\n📚 API Reference: http://localhost:3000/reference\n');
+
 export default app;
