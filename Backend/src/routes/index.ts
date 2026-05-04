@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import userRoutes from './user.routes';
 import authRoutes from './auth.routes';
+import chatRoutes from './chat.routes';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { HonoEnv } from '../types/env';
 
@@ -13,5 +14,7 @@ router.route('/auth', authRoutes);
 router.use('/*', authMiddleware);
 
 router.route('/users', userRoutes);
+router.route('/chat', chatRoutes);
+
 
 export default router;
