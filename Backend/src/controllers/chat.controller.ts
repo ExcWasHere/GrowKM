@@ -1,26 +1,32 @@
 import { Context } from 'hono';
-import { streamSSE } from 'hono/streaming';
 import { getAuthClient, getUserId } from '../middlewares/auth.middleware';
 import { AppError } from '../middlewares/error.middleware';
+import { successResponse } from '../utils/response.util';
 import * as chatRepository from '../repositories/chat.repository';
 import * as chatService from '../services/business/chat.service';
-import { successResponse } from '../utils/response.util';
 import { HonoEnv } from '../types/env';
 
-export const handleCreateSession = async (c: Context<HonoEnv>) => {
+// POST /api/chat
+// Sends a message to the AI Copilot. Auto-creates a new session if session_id is not provided.
+// Returns the AI response and the session_id so the client can continue the conversation.
+export const handleChat = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
-    const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
+    const body = await c.req.json() as { message: string; session_id?: string; context_step_type?: string };
 
-    const session = await chatRepository.createSession(
+    const result = await chatService.chat(
         supabase,
+        c.env,
         userId,
-        (body.session_type as any) ?? 'copilot',
+        body.message,
+        body.session_id,
         body.context_step_type as any,
     );
-    return successResponse(c, session, 'Chat session created', 201);
+    return successResponse(c, result, 'AI response generated');
 };
 
+// GET /api/chat/sessions
+// Returns all chat sessions belonging to the logged-in user (metadata only, no messages)
 export const handleGetSessions = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
@@ -29,10 +35,13 @@ export const handleGetSessions = async (c: Context<HonoEnv>) => {
     return successResponse(c, sessions, 'Chat sessions fetched');
 };
 
+// GET /api/chat/sessions/:id
+// Returns a single session with its full message history
 export const handleGetSession = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
     const sessionId = c.req.param('id');
+    if (!sessionId) throw new AppError(400, 'Session ID is required');
 
     const session = await chatRepository.getSessionById(supabase, sessionId);
     if (!session) throw new AppError(404, 'Chat session not found');
@@ -41,10 +50,13 @@ export const handleGetSession = async (c: Context<HonoEnv>) => {
     return successResponse(c, session, 'Chat session fetched');
 };
 
+// DELETE /api/chat/sessions/:id
+// Permanently deletes a chat session and its message history
 export const handleDeleteSession = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
     const sessionId = c.req.param('id');
+    if (!sessionId) throw new AppError(400, 'Session ID is required');
 
     const session = await chatRepository.getSessionById(supabase, sessionId);
     if (!session) throw new AppError(404, 'Chat session not found');
@@ -52,39 +64,4 @@ export const handleDeleteSession = async (c: Context<HonoEnv>) => {
 
     await chatRepository.deleteSession(supabase, sessionId);
     return successResponse(c, null, 'Chat session deleted');
-};
-
-// Returns a streaming SSE response. Uses plain .post() in routes (not .openapi())
-// because streamSSE return type is incompatible with the openapi() handler type checker.
-export const handleSendMessage = async (c: Context<HonoEnv>) => {
-    const supabase = getAuthClient(c);
-    const userId = getUserId(c);
-    const sessionId = c.req.param('id');
-
-    const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
-    const message = body.message;
-    if (!message || typeof message !== 'string' || !message.trim()) {
-        throw new AppError(400, '"message" is required and must be a non-empty string');
-    }
-
-    return streamSSE(c, async (stream) => {
-        try {
-            await chatService.streamResponse(
-                supabase,
-                c.env,
-                sessionId,
-                userId,
-                message.trim(),
-                async (token) => {
-                    await stream.writeSSE({ data: JSON.stringify({ content: token }), event: 'chunk' });
-                },
-                async () => {
-                    await stream.writeSSE({ data: JSON.stringify({ saved: true }), event: 'done' });
-                },
-            );
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Streaming error';
-            await stream.writeSSE({ data: JSON.stringify({ message: msg }), event: 'error' });
-        }
-    });
 };

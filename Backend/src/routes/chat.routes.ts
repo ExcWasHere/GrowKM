@@ -4,84 +4,109 @@ import * as chatController from '../controllers/chat.controller';
 
 const chatRoutes = new OpenAPIHono<HonoEnv>();
 
-const STEP_TYPES = ['nib', 'spp_irt', 'halal', 'bpom', 'merek', 'sertifikat_standar'] as const;
-const SESSION_TYPES = ['onboarding', 'copilot', 'financial_parser'] as const;
+// ─── Shared ─────────────────────────────────────────────────────────────────
 
-const createSessionRoute = createRoute({
+const STEP_TYPES = ['nib', 'spp_irt', 'halal', 'bpom', 'merek', 'sertifikat_standar'] as const;
+
+const sessionIdParam = z.object({
+    id: z.string().min(1).openapi({
+        param: { in: 'path', name: 'id' },
+        description: 'Chat session UUID',
+    }),
+});
+
+// ─── Route Specs ─────────────────────────────────────────────────────────────
+
+const chatRoute = createRoute({
     method: 'post',
     path: '/',
     tags: ['Chat'],
-    summary: 'Create Chat Session',
-    description: 'Buat sesi chat baru. Opsional: tentukan `context_step_type` untuk mengarahkan Copilot ke izin tertentu (nib, halal, dll.).',
+    summary: 'Chat with Copilot',
+    description: [
+        'Sends a message to the AI Compliance Copilot and returns the full AI response.',
+        '',
+        '**Session behaviour:**',
+        '- If `session_id` is **omitted**, a new session is automatically created.',
+        '- If `session_id` is **provided**, the conversation continues from where it left off.',
+        '- The `session_id` is always returned in the response — store it on the client to maintain conversation context.',
+        '',
+        'Optionally pass `context_step_type` (first message only) to focus the AI on a specific permit flow.',
+    ].join('\n'),
     security: [{ BearerAuth: [] }],
     request: {
         body: {
             content: {
                 'application/json': {
                     schema: z.object({
-                        session_type: z.enum(SESSION_TYPES).optional().openapi({ default: 'copilot' }),
+                        message: z.string().min(1).openapi({
+                            example: 'Bagaimana cara mengurus NIB untuk usaha kuliner saya?',
+                        }),
+                        session_id: z.union([z.string().uuid(), z.literal('')]).optional().openapi({
+                            description: 'Omit or pass empty string to start a new conversation. Pass a valid UUID to continue an existing one.',
+                        }),
                         context_step_type: z.enum(STEP_TYPES).optional().openapi({
-                            description: 'Izin yang sedang diproses user — digunakan untuk menyaring knowledge base',
+                            description: 'Narrows the AI focus to a specific permit domain (used when creating a new session).',
                             example: 'nib',
                         }),
-                    }).openapi('CreateSessionInput'),
+                    }).openapi('ChatInput'),
                 },
             },
         },
     },
     responses: {
-        201: { description: 'Session created successfully' },
+        200: { description: 'AI response generated. Contains `session_id` to use for follow-up messages.' },
+        403: { description: 'Forbidden — session belongs to another user' },
+        404: { description: 'Session not found' },
     },
 });
 
 const getSessionsRoute = createRoute({
     method: 'get',
-    path: '/',
+    path: '/sessions',
     tags: ['Chat'],
     summary: 'List Chat Sessions',
-    description: 'Ambil semua sesi chat milik user yang sedang login, diurutkan terbaru dulu.',
+    description: 'Returns all chat sessions belonging to the authenticated user, ordered by most recent activity. Message history is excluded for performance.',
     security: [{ BearerAuth: [] }],
     responses: {
-        200: { description: 'List of chat sessions ordered by last activity' },
+        200: { description: 'List of chat sessions (metadata only)' },
     },
 });
 
 const getSessionRoute = createRoute({
     method: 'get',
-    path: '/:id',
+    path: '/sessions/{id}',
     tags: ['Chat'],
     summary: 'Get Chat Session',
-    description: 'Ambil satu sesi beserta seluruh riwayat pesan (messages JSONB).',
+    description: 'Returns a single session including its full message history.',
     security: [{ BearerAuth: [] }],
+    request: { params: sessionIdParam },
     responses: {
-        200: { description: 'Chat session with message history' },
-        404: { description: 'Session not found' },
+        200: { description: 'Chat session with full message history' },
         403: { description: 'Forbidden — session belongs to another user' },
+        404: { description: 'Session not found' },
     },
 });
 
 const deleteSessionRoute = createRoute({
     method: 'delete',
-    path: '/:id',
+    path: '/sessions/{id}',
     tags: ['Chat'],
     summary: 'Delete Chat Session',
-    description: 'Hapus sesi chat beserta semua riwayat pesannya.',
+    description: 'Permanently deletes a chat session and its entire message history.',
     security: [{ BearerAuth: [] }],
+    request: { params: sessionIdParam },
     responses: {
         200: { description: 'Session deleted' },
+        403: { description: 'Forbidden' },
         404: { description: 'Session not found' },
     },
 });
 
-// CRUD — documented in Scalar UI
-chatRoutes.openapi(createSessionRoute, chatController.handleCreateSession as any);
-chatRoutes.openapi(getSessionsRoute, chatController.handleGetSessions as any);
-chatRoutes.openapi(getSessionRoute, chatController.handleGetSession as any);
-chatRoutes.openapi(deleteSessionRoute, chatController.handleDeleteSession as any);
+// ─── Handlers ────────────────────────────────────────────────────────────────
 
-// SSE streaming — plain .post() because streamSSE return type conflicts with openapi() type checker
-// POST /api/chat/:id/messages  |  Accept: text/event-stream
-// Events: { event: 'chunk', data: '{"content":"..."}' } | { event: 'done', data: '{"saved":true}' } | { event: 'error', data: '{"message":"..."}' }
-chatRoutes.post('/:id/messages', chatController.handleSendMessage);
+chatRoutes.openapi(chatRoute, chatController.handleChat as any);
+chatRoutes.openapi(getSessionsRoute, chatController.handleGetSessions);
+chatRoutes.openapi(getSessionRoute, chatController.handleGetSession);
+chatRoutes.openapi(deleteSessionRoute, chatController.handleDeleteSession);
 
 export default chatRoutes;

@@ -1,14 +1,3 @@
-/**
- * Knowledge Base Ingestion Script — GrowKM
- * Flow: scan .md files → chunk by ## headings → embed via Gemini → upsert to Supabase pgvector
- *
- * Asymmetric embedding (gemini-embedding-2):
- *   - Documents (stored here): `title: {title} | text: {content}`
- *   - Queries   (retrieval side): `task: question answering | query: {userText}`
- *
- * Usage: bun run ingest
- */
-
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, relative } from 'path';
 import { GoogleGenAI } from '@google/genai';
@@ -25,7 +14,7 @@ if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base');
+const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base_2');
 
 interface Chunk {
     domain: string;
