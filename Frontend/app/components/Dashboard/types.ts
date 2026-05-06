@@ -25,4 +25,4 @@ export interface BenefitItem {
   unlocked: boolean;
 }
 
-export type Page = "dashboard" | "roadmap" | "chat" | "scanner" | "finance";
+export type Page = "dashboard" | "roadmap" | "chat" | "scanner" | "finance" | "profile";

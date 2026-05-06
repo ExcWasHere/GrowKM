@@ -9,6 +9,7 @@ import { RoadmapPage } from "../../components/Dashboard/pages/RoadmapPage";
 import { ChatPage } from "../../components/Dashboard/pages/ChatPage";
 import { ScannerPage } from "../../components/Dashboard/pages/ScannerPage";
 import { FinancePage } from "../../components/Dashboard/pages/FinancePage";
+import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage"
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
@@ -16,6 +17,7 @@ const PAGE_TITLES: Record<Page, string> = {
   chat: "Tanya AI Copilot",
   scanner: "Compliance Scanner",
   finance: "Financial Record",
+  profile: "Business Profile",
 };
 
 export default function GrowKMDashboard() {
@@ -46,6 +48,8 @@ export default function GrowKMDashboard() {
         return <ScannerPage user={user} />;
       case "finance":
         return <FinancePage user={user} />;
+      case "profile":
+        return <ProfilePage user={user} />;
     }
   };
 

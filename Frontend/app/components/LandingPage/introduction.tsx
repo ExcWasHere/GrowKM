@@ -24,7 +24,7 @@ export default function IndexHero() {
 
         <div className="mt-14 flex justify-center">
           <img
-            src="/Group.png"
+            src="/favicon.ico"
             alt="Ilustrasi Utama GrowKM"
             className="w-full max-w-sm object-contain"
           />
@@ -57,7 +57,7 @@ export default function IndexHero() {
 
               <div>
                 <button className="px-12 py-5 bg-linear-to-r from-amber-400 to-amber-400 text-white font-bold rounded-full shadow-lg hover:shadow-amber-200/50 transform hover:scale-105 transition-all duration-300">
-                  Kepoin GrowKM Lebih Dalam Yuk!
+                  Kepoin GrowKM Yuk!
                 </button>
               </div>
             </div>
@@ -67,7 +67,7 @@ export default function IndexHero() {
               <div className="relative w-full max-w-xl">
                 <div className="relative p-10 rounded-3xl overflow-hidden">
                   <img
-                    src="/Group.png"
+                    src="/banner1.png"
                     alt="Ilustrasi Utama GrowKM"
                     className="w-full h-auto object-contain transform hover:scale-105 transition-transform duration-500"
                   />
