@@ -18,119 +18,107 @@ import {
   Star,
 } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
+import type { BusinessProfile } from "../../../hooks/useUserProfile";
 
 interface ProfilePageProps {
   user: UserProfile;
+  businessProfile: BusinessProfile;
+  authEmail: string;
+  onSave: (updates: Partial<BusinessProfile>) => void;
 }
 
-// Edit the fields to match your UserProfile type
-interface EditableProfile {
-  name: string;
+const LEVEL_CONFIG: Record<string, { emoji: string; label: string; color: string }> = {
+  STARTER: { emoji: "⭐", label: "Starter", color: "from-gray-400 to-gray-500" },
+  GROWING: { emoji: "🌱", label: "Growing", color: "from-green-400 to-emerald-500" },
+  ESTABLISHED: { emoji: "🏢", label: "Established", color: "from-blue-400 to-blue-600" },
+  PRO: { emoji: "🏆", label: "Pro", color: "from-amber-400 to-orange-500" },
+  ENTERPRISE: { emoji: "💎", label: "Enterprise", color: "from-purple-400 to-purple-600" },
+};
+
+const BUSINESS_TYPES: { value: UserProfile["businessType"]; label: string }[] = [
+  { value: "kuliner", label: "Kuliner & F&B" },
+  { value: "fashion_craft", label: "Fashion & Kerajinan" },
+  { value: "jasa_personal_care", label: "Jasa & Personal Care" },
+  { value: "lainnya", label: "Lainnya" },
+];
+
+const CITIES = [
+  "Jakarta", "Surabaya", "Bandung", "Medan", "Semarang",
+  "Makassar", "Malang", "Denpasar", "Yogyakarta", "Palembang",
+];
+
+const STATS = [
+  { label: "Hari Bergabung", value: "1", icon: "📅" },
+  { label: "Langkah Selesai", value: "0", icon: "✅" },
+  { label: "Dokumen Legal", value: "0", icon: "📋" },
+  { label: "Poin Reward", value: "0", icon: "💰" },
+];
+
+interface EditableDraft {
   businessName: string;
-  businessType: string;
+  businessType: UserProfile["businessType"];
   city: string;
   phone: string;
-  email: string;
   address: string;
   description: string;
   npwp: string;
   nib: string;
 }
 
-const LEVEL_CONFIG: Record<string, { emoji: string; label: string; color: string }> = {
-  STARTER: { emoji: "⭐", label: "Starter", color: "from-gray-400 to-gray-500" },
-  GROWING: { emoji: "", label: "Growing", color: "from-green-400 to-emerald-500" },
-  ESTABLISHED: { emoji: "🏢", label: "Established", color: "from-blue-400 to-blue-600" },
-  PRO: { emoji: "🏆", label: "Pro", color: "from-amber-400 to-orange-500" },
-  ENTERPRISE: { emoji: "💎", label: "Enterprise", color: "from-purple-400 to-purple-600" },
-};
-
-const BUSINESS_TYPES = [
-  "Kuliner & F&B",
-  "Retail & Perdagangan",
-  "Jasa & Layanan",
-  "Fashion & Kerajinan",
-  "Teknologi & Digital",
-  "Pertanian & Perkebunan",
-  "Kesehatan & Kecantikan",
-  "Pendidikan & Pelatihan",
-  "Lainnya",
-];
-
-const CITIES = [
-  "Jakarta",
-  "Surabaya",
-  "Bandung",
-  "Medan",
-  "Semarang",
-  "Makassar",
-  "Malang",
-  "Denpasar",
-  "Yogyakarta",
-  "Palembang",
-];
-
-const STATS = [
-  { label: "Hari Bergabung", value: "128", icon: "📅" },
-  { label: "Langkah Selesai", value: "14", icon: "✅" },
-  { label: "Dokumen Legal", value: "3", icon: "📋" },
-  { label: "Poin Reward", value: "850", icon: "💰" },
-];
-
-export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({
+  user,
+  businessProfile,
+  authEmail,
+  onSave,
+}) => {
   const levelCfg = LEVEL_CONFIG[user.level] ?? LEVEL_CONFIG.STARTER;
-
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState<EditableProfile>({
-    name: user.name,
-    businessName: user.businessName,
-    businessType: user.businessType,
-    city: user.city,
-    phone: "",
-    email: "",
-    address: "",
-    description: "",
-    npwp: "",
-    nib: "",
+  const makeDraft = (): EditableDraft => ({
+    businessName: businessProfile.businessName,
+    businessType: businessProfile.businessType,
+    city: businessProfile.city,
+    phone: businessProfile.phone,
+    address: businessProfile.address,
+    description: businessProfile.description,
+    npwp: businessProfile.npwp,
+    nib: businessProfile.nib,
   });
-  const [draft, setDraft] = useState<EditableProfile>(profile);
 
+  const [draft, setDraft] = useState<EditableDraft>(makeDraft);
   const handleEdit = () => {
-    setDraft(profile);
+    setDraft(makeDraft());
     setIsEditing(true);
     setSaved(false);
   };
 
   const handleSave = () => {
-    setProfile(draft);
+    onSave(draft);
     setIsEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
   const handleCancel = () => {
-    setDraft(profile);
+    setDraft(makeDraft());
     setIsEditing(false);
   };
 
-  const handleChange = (field: keyof EditableProfile, value: string) => {
+  const handleChange = (field: keyof EditableDraft, value: string) => {
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
-
-  const completionFields: (keyof EditableProfile)[] = [
-    "name",
-    "businessName",
-    "businessType",
-    "city",
-    "phone",
-    "email",
-    "address",
-    "description",
-    "npwp",
-    "nib",
+  const completionFields = [
+    user.name,
+    authEmail,
+    businessProfile.businessName,
+    businessProfile.city,
+    businessProfile.phone,
+    businessProfile.address,
+    businessProfile.description,
+    businessProfile.npwp,
+    businessProfile.nib,
   ];
-  const filled = completionFields.filter((f) => !!profile[f]).length;
+  const filled = completionFields.filter(Boolean).length;
   const completionPct = Math.round((filled / completionFields.length) * 100);
 
   return (
@@ -143,17 +131,20 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
           <div className="p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
               <div className="w-24 h-24 rounded-full border-4 border-amber-100 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                {profile.name.charAt(0).toUpperCase()}
+                {user.name.charAt(0).toUpperCase()}
               </div>
               <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white border-2 border-amber-300 flex items-center justify-center shadow-md hover:bg-amber-50 transition-colors">
                 <Camera size={14} className="text-amber-500" />
               </button>
             </div>
 
-            <h4 className="font-bold text-lg text-gray-800 mb-0.5">{profile.name}</h4>
-            <p className="text-sm text-gray-500 font-medium mb-1">{profile.businessName || "—"}</p>
+            <h4 className="font-bold text-lg text-gray-800 mb-0.5">{user.name}</h4>
+            <p className="text-sm text-gray-500 font-medium mb-1">
+              {businessProfile.businessName || "Belum ada nama usaha"}
+            </p>
             <p className="text-xs text-gray-400 mb-4">
-              {profile.businessType} • {profile.city}
+              {authEmail && <span>{authEmail}</span>}
+              {businessProfile.city && <span> • {businessProfile.city}</span>}
             </p>
 
             {/* Level badge */}
@@ -164,7 +155,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
               <span>{levelCfg.label}</span>
             </div>
 
-            {/* Progress completion */}
+            {/* Kelengkapan profil */}
             <div className="w-full bg-amber-50 rounded-lg border border-amber-100 p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">
@@ -207,7 +198,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
           </div>
         </div>
 
-        {/* Formalisasi progress */}
+        {/* Progres Formalisasi */}
         <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-5">
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
             <TrendingUp size={14} className="text-amber-500" />
@@ -231,7 +222,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
 
       {/* ── RIGHT COLUMN ── */}
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
-        {/* Save notification */}
+        {/* Notifikasi simpan berhasil */}
         {saved && (
           <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 shadow-sm">
             <CheckCircle size={18} className="text-green-500 shrink-0" />
@@ -277,13 +268,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
           </div>
 
           <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field
+            {/* Nama dari auth — read-only selalu */}
+            <ReadOnlyField
               label="Nama Pemilik"
               icon={<User size={14} />}
-              value={draft.name}
-              editing={isEditing}
-              onChange={(v) => handleChange("name", v)}
-              placeholder="Nama lengkap pemilik"
+              value={user.name}
+              hint="Diambil dari akun"
+            />
+            {/* Email dari auth — read-only selalu */}
+            <ReadOnlyField
+              label="Email"
+              icon={<Mail size={14} />}
+              value={authEmail || "—"}
+              hint="Diambil dari akun"
             />
             <Field
               label="Nama Usaha"
@@ -298,7 +295,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
               icon={<Briefcase size={14} />}
               value={draft.businessType}
               editing={isEditing}
-              onChange={(v) => handleChange("businessType", v)}
+              onChange={(v) => handleChange("businessType", v as UserProfile["businessType"])}
               type="select"
               options={BUSINESS_TYPES}
             />
@@ -309,7 +306,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
               editing={isEditing}
               onChange={(v) => handleChange("city", v)}
               type="select"
-              options={CITIES}
+              options={CITIES.map((c) => ({ value: c, label: c }))}
             />
             <Field
               label="Nomor Telepon"
@@ -318,14 +315,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
               editing={isEditing}
               onChange={(v) => handleChange("phone", v)}
               placeholder="08xx-xxxx-xxxx"
-            />
-            <Field
-              label="Email"
-              icon={<Mail size={14} />}
-              value={draft.email}
-              editing={isEditing}
-              onChange={(v) => handleChange("email", v)}
-              placeholder="email@usaha.com"
             />
             <div className="md:col-span-2">
               <Field
@@ -383,7 +372,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
           </div>
         </div>
 
-        {/* Achievements */}
+        {/* Pencapaian */}
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 shadow-sm p-5">
           <h3 className="text-xs font-bold text-orange-900 uppercase tracking-wider flex items-center gap-2 mb-4">
             <Award size={14} />
@@ -391,9 +380,24 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
-              { icon: "🏅", title: "Profil Pertama", desc: "Buat profil usaha", done: true },
-              { icon: "📋", title: "NIB Terdaftar", desc: "Lengkapi NIB usaha", done: false },
-              { icon: "💼", title: "Pembiayaan Ready", desc: "Siap ajukan kredit", done: false },
+              {
+                icon: "🏅",
+                title: "Profil Pertama",
+                desc: "Buat profil usaha",
+                done: !!businessProfile.businessName,
+              },
+              {
+                icon: "📋",
+                title: "NIB Terdaftar",
+                desc: "Lengkapi NIB usaha",
+                done: !!businessProfile.nib,
+              },
+              {
+                icon: "💼",
+                title: "Pembiayaan Ready",
+                desc: "Siap ajukan kredit",
+                done: user.progressPercent >= 80,
+              },
             ].map((a) => (
               <div
                 key={a.title}
@@ -418,7 +422,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
   );
 };
 
-// ── Helper sub-components ──
+const ReadOnlyField: React.FC<{
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  hint?: string;
+}> = ({ label, icon, value, hint }) => (
+  <div>
+    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+      <span className="text-amber-400">{icon}</span>
+      {label}
+    </label>
+    <div className="px-3 py-2 rounded-lg border bg-gray-50 border-gray-100 text-sm font-medium text-gray-600 flex items-center justify-between">
+      <span>{value}</span>
+      {hint && (
+        <span className="text-[10px] text-gray-400 italic ml-2">{hint}</span>
+      )}
+    </div>
+  </div>
+);
 
 interface FieldProps {
   label: string;
@@ -428,70 +450,70 @@ interface FieldProps {
   onChange: (v: string) => void;
   placeholder?: string;
   type?: "text" | "select";
-  options?: string[];
+  options?: string[] | { value: string; label: string }[];
   multiline?: boolean;
 }
 
 const Field: React.FC<FieldProps> = ({
-  label,
-  icon,
-  value,
-  editing,
-  onChange,
-  placeholder = "",
-  type = "text",
-  options = [],
-  multiline = false,
-}) => (
-  <div>
-    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-      <span className="text-amber-400">{icon}</span>
-      {label}
-    </label>
-    {editing ? (
-      type === "select" ? (
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium"
-        >
-          <option value="">Pilih {label}</option>
-          {options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      ) : multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium resize-none"
-        />
+  label, icon, value, editing, onChange,
+  placeholder = "", type = "text", options = [], multiline = false,
+}) => {
+  const normalizedOptions = options.map((o) =>
+    typeof o === "string" ? { value: o, label: o } : o
+  );
+  const displayLabel = type === "select"
+    ? normalizedOptions.find((o) => o.value === value)?.label || value
+    : value;
+
+  return (
+    <div>
+      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+        <span className="text-amber-400">{icon}</span>
+        {label}
+      </label>
+      {editing ? (
+        type === "select" ? (
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium"
+          >
+            <option value="">Pilih {label}</option>
+            {normalizedOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        ) : multiline ? (
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium resize-none"
+          />
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium"
+          />
+        )
       ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm text-gray-800 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300 font-medium"
-        />
-      )
-    ) : (
-      <div
-        className={`px-3 py-2 rounded-lg border text-sm font-medium ${
-          value
-            ? "bg-white border-amber-100 text-gray-800"
-            : "bg-gray-50 border-gray-100 text-gray-400 italic"
-        }`}
-      >
-        {value || `Belum diisi`}
-      </div>
-    )}
-  </div>
-);
+        <div
+          className={`px-3 py-2 rounded-lg border text-sm font-medium ${
+            value
+              ? "bg-white border-amber-100 text-gray-800"
+              : "bg-gray-50 border-gray-100 text-gray-400 italic"
+          }`}
+        >
+          {displayLabel || "Belum diisi"}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface LegalFieldProps {
   label: string;
@@ -503,12 +525,7 @@ interface LegalFieldProps {
 }
 
 const LegalField: React.FC<LegalFieldProps> = ({
-  label,
-  value,
-  editing,
-  onChange,
-  placeholder,
-  hint,
+  label, value, editing, onChange, placeholder, hint,
 }) => (
   <div className="bg-white rounded-lg border border-amber-100 p-4">
     <div className="flex items-center justify-between mb-2">
