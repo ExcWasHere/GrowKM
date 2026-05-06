@@ -64,7 +64,7 @@ export const LEVEL_CONFIG = {
   },
   GROWING: {
     label: "Growing",
-    emoji: "🌱",
+    emoji: "",
     color: "from-amber-400 to-orange-500",
     range: "25–50%",
   },

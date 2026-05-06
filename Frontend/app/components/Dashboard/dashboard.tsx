@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Menu } from "lucide-react";
 import type { Page } from "./types";
-import { SAMPLE_USER } from "./constants";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import { Sidebar } from "../../common/dashboard/sidebar";
 import { MobileBottomNav } from "../../common/dashboard/MobileBottomNav";
 import { DashboardPage } from "../../components/Dashboard/pages/DashboardPage";
@@ -9,6 +9,7 @@ import { RoadmapPage } from "../../components/Dashboard/pages/RoadmapPage";
 import { ChatPage } from "../../components/Dashboard/pages/ChatPage";
 import { ScannerPage } from "../../components/Dashboard/pages/ScannerPage";
 import { FinancePage } from "../../components/Dashboard/pages/FinancePage";
+import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage";
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
@@ -16,13 +17,16 @@ const PAGE_TITLES: Record<Page, string> = {
   chat: "Tanya AI Copilot",
   scanner: "Compliance Scanner",
   finance: "Financial Record",
+  profile: "Business Profile",
 };
 
 export default function GrowKMDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [chatContext, setChatContext] = useState<string | undefined>(undefined);
-  const user = SAMPLE_USER;
+
+  // Ambil user dari auth + localStorage, bukan SAMPLE_USER lagi
+  const { userProfile, businessProfile, authEmail, updateBusinessProfile } = useUserProfile();
 
   const handleOpenChat = (stepId: string) => {
     setChatContext(stepId);
@@ -37,15 +41,24 @@ export default function GrowKMDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return <DashboardPage user={user} onNavigate={handleNavigate} />;
+        return <DashboardPage user={userProfile} onNavigate={handleNavigate} />;
       case "roadmap":
-        return <RoadmapPage user={user} onOpenChat={handleOpenChat} />;
+        return <RoadmapPage user={userProfile} onOpenChat={handleOpenChat} />;
       case "chat":
-        return <ChatPage user={user} initialContext={chatContext} />;
+        return <ChatPage user={userProfile} initialContext={chatContext} />;
       case "scanner":
-        return <ScannerPage user={user} />;
+        return <ScannerPage user={userProfile} />;
       case "finance":
-        return <FinancePage user={user} />;
+        return <FinancePage user={userProfile} />;
+      case "profile":
+        return (
+          <ProfilePage
+            user={userProfile}
+            businessProfile={businessProfile}
+            authEmail={authEmail}
+            onSave={updateBusinessProfile}
+          />
+        );
     }
   };
 
@@ -63,7 +76,7 @@ export default function GrowKMDashboard() {
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar
-          user={user}
+          user={userProfile}
           isOpen={isSidebarOpen}
           currentPage={currentPage}
           onNavigate={handleNavigate}
@@ -73,7 +86,7 @@ export default function GrowKMDashboard() {
 
       {/* Mobile Sidebar */}
       <Sidebar
-        user={user}
+        user={userProfile}
         isOpen={isSidebarOpen}
         currentPage={currentPage}
         onNavigate={handleNavigate}

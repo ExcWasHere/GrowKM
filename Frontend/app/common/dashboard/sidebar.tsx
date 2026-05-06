@@ -52,11 +52,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Logo */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl shadow-lg">
-            🌱
+          <div className="w-11 h-11 shrink-0 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
+            <img
+              src="/favicon.ico"
+              alt="GrowKM Logo"
+              className="w-10 h-10 object-contain scale-250"
+            />
           </div>
           <div>
-            <h2 className="font-black text-gray-900 text-base leading-none">GrowKM</h2>
+            <h2 className="font-black text-amber-600 text-base leading-none">
+              GrowKM
+            </h2>
             <p className="text-[11px] text-gray-500">UMKM Copilot</p>
           </div>
         </div>
@@ -70,7 +76,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <button className="py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors mb-6 text-xs border-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-transparent shadow-md hover:shadow-lg">
+      <button
+        onClick={() => {
+          onNavigate("profile");
+          if (isMobile) onClose();
+        }}
+        className="py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors mb-6 text-xs border-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-transparent shadow-md hover:shadow-lg"
+      >
         <User size={14} />
         Profil Usaha
       </button>
@@ -104,7 +116,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Logout */}
       <div className="pt-4 border-t border-amber-100 space-y-1">
         <button
-          onClick={() => { window.location.href = "/"; }}
+          onClick={() => {
+            window.location.href = "/";
+          }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition-all text-red-500 hover:bg-red-50"
         >
           <LogOut size={18} /> Keluar
@@ -135,21 +149,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl shadow-lg">
-                  🌱
+                <div className="w-11 h-11 shrink-0 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
+                  <img
+                    src="/favicon.ico"
+                    alt="GrowKM Logo"
+                    className="w-10 h-10 object-contain scale-250"
+                  />
                 </div>
                 <div>
-                  <h2 className="font-black text-gray-900 text-base leading-none">GrowKM</h2>
+                  <h2 className="font-black text-gray-900 text-base leading-none">
+                    GrowKM
+                  </h2>
                   <p className="text-[11px] text-gray-500">UMKM Copilot</p>
                 </div>
               </div>
-              <button onClick={onClose} className="p-1 hover:bg-amber-50 rounded-lg">
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-amber-50 rounded-lg"
+              >
                 <X size={20} className="text-gray-600" />
               </button>
             </div>
 
-            <button className="py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 mb-6 text-sm border-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-transparent shadow-md">
-              <User size={16} />
+            <button
+              onClick={() => {
+                onNavigate("profile");
+                if (isMobile) onClose();
+              }}
+              className="py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors mb-6 text-xs border-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-transparent shadow-md hover:shadow-lg"
+            >
+              <User size={14} />
               Profil Usaha
             </button>
 
@@ -159,7 +188,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return (
                   <button
                     key={page}
-                    onClick={() => { onNavigate(page); onClose(); }}
+                    onClick={() => {
+                      onNavigate(page);
+                      onClose();
+                    }}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg font-bold text-sm transition-all ${
                       active
                         ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md"
@@ -177,7 +209,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <div className="pt-4 border-t border-amber-100">
               <button
-                onClick={() => { window.location.href = "/"; }}
+                onClick={() => {
+                  window.location.href = "/";
+                }}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-bold text-sm text-red-500 hover:bg-red-50 transition-all"
               >
                 <LogOut size={18} /> Keluar
