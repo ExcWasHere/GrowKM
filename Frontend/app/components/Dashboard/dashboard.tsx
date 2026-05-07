@@ -24,8 +24,6 @@ export default function GrowKMDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [chatContext, setChatContext] = useState<string | undefined>(undefined);
-
-  // Ambil user dari auth + localStorage, bukan SAMPLE_USER lagi
   const { userProfile, businessProfile, authEmail, updateBusinessProfile } = useUserProfile();
 
   const handleOpenChat = (stepId: string) => {
@@ -41,7 +39,7 @@ export default function GrowKMDashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return <DashboardPage user={userProfile} onNavigate={handleNavigate} />;
+        return <DashboardPage user={userProfile} businessProfile={businessProfile} onNavigate={handleNavigate} />;
       case "roadmap":
         return <RoadmapPage user={userProfile} onOpenChat={handleOpenChat} />;
       case "chat":

@@ -1,53 +1,67 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import type { UserProfile } from "../components/Dashboard/types";
+
 export interface BusinessProfile {
-  businessName: string;
-  businessType: UserProfile["businessType"];
-  city: string;
-  monthlyRevenue: string;
-  employeeCount: number;
-  phone: string;
-  email: string;
-  address: string;
+  business_name: string;
+  business_type: UserProfile["businessType"];
+  kbli_code: string;
   description: string;
-  npwp: string;
-  nib: string;
-  progressPercent: number;
-  level: UserProfile["level"];
+  province: string;
+  city: string;
+  district: string;
+  production_location: string;
+  employee_count: number;
+  monthly_revenue_estimate: number;
+  has_nib: boolean;
+  has_pirt: boolean;
+  has_halal: boolean;
+  has_bpom: boolean;
+  has_merek: boolean;
+  onboarding_completed: boolean;
 }
 
 const BUSINESS_PROFILE_KEY = "business_profile";
+
 const DEFAULT_BUSINESS: BusinessProfile = {
-  businessName: "",
-  businessType: "lainnya",
-  city: "",
-  monthlyRevenue: "",
-  employeeCount: 0,
-  phone: "",
-  email: "",
-  address: "",
+  business_name: "",
+  business_type: "lainnya",
+  kbli_code: "",
   description: "",
-  npwp: "",
-  nib: "",
-  progressPercent: 0,
-  level: "STARTER",
+  province: "",
+  city: "",
+  district: "",
+  production_location: "",
+  employee_count: 0,
+  monthly_revenue_estimate: 0,
+  has_nib: false,
+  has_pirt: false,
+  has_halal: false,
+  has_bpom: false,
+  has_merek: false,
+  onboarding_completed: false,
 };
 
-function computeLevelAndProgress(bp: BusinessProfile, authName: string): Pick<BusinessProfile, "level" | "progressPercent"> {
-  const fields: boolean[] = [
+function countFormalizationFlags(bp: BusinessProfile): number {
+  return [bp.has_nib, bp.has_pirt, bp.has_halal, bp.has_bpom, bp.has_merek].filter(Boolean).length;
+}
+
+function computeLevelAndProgress(
+  bp: BusinessProfile,
+  authName: string
+): Pick<UserProfile, "level" | "progressPercent"> {
+  const profileFields: boolean[] = [
     !!authName,
-    !!bp.businessName,
-    !!bp.businessType && bp.businessType !== "lainnya",
+    !!bp.business_name,
+    bp.business_type !== "lainnya",
     !!bp.city,
-    !!bp.phone,
-    !!bp.email,
-    !!bp.address,
+    !!bp.province,
     !!bp.description,
-    !!bp.npwp,
-    !!bp.nib,
+    !!bp.employee_count,
+    !!bp.monthly_revenue_estimate,
   ];
-  const filled = fields.filter(Boolean).length;
-  const progressPercent = Math.round((filled / fields.length) * 100);
+  const profileScore = profileFields.filter(Boolean).length / profileFields.length;
+  const formalizationScore = countFormalizationFlags(bp) / 5;
+  const progressPercent = Math.round((profileScore * 0.5 + formalizationScore * 0.5) * 100);
 
   let level: UserProfile["level"] = "STARTER";
   if (progressPercent >= 80) level = "ENTERPRISE";
@@ -103,11 +117,13 @@ export function useUserProfile() {
   const computed = computeLevelAndProgress(businessProfile, authName);
   const userProfile: UserProfile = {
     name: authName || "Pengguna",
-    businessName: businessProfile.businessName,
-    businessType: businessProfile.businessType || "lainnya",
+    businessName: businessProfile.business_name,
+    businessType: businessProfile.business_type,
     city: businessProfile.city,
-    monthlyRevenue: businessProfile.monthlyRevenue,
-    employeeCount: businessProfile.employeeCount,
+    monthlyRevenue: businessProfile.monthly_revenue_estimate
+      ? `${(businessProfile.monthly_revenue_estimate / 1_000_000).toFixed(0)}jt`
+      : "",
+    employeeCount: businessProfile.employee_count,
     level: computed.level,
     progressPercent: computed.progressPercent,
   };
