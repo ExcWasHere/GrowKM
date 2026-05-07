@@ -1,5 +1,6 @@
 import type { FormalizationStep, UserProfile } from "./types";
 import type { Page } from "./types";
+import type { BusinessProfile } from "../../hooks/useUserProfile";
 
 export const SAMPLE_USER: UserProfile = {
   name: "Bu Rina",
@@ -135,11 +136,35 @@ export const FEATURE_CARDS = [
   },
 ];
 
-export const BADGES = [
-  { name: "NIB Pertama", icon: "🏛️", earned: true },
-  { name: "Usaha Terdaftar", icon: "📋", earned: true },
-  { name: "Halal Certified", icon: "☪️", earned: false },
-];
+export function getBadges(bp: BusinessProfile) {
+  return [
+    {
+      icon: "🏛️",
+      name: "Punya NIB",
+      earned: bp.has_nib,
+    },
+    {
+      icon: "🍽️",
+      name: "SPP-IRT / PIRT",
+      earned: bp.has_pirt,
+    },
+    {
+      icon: "☪️",
+      name: "Sertifikat Halal",
+      earned: bp.has_halal,
+    },
+    {
+      icon: "💊",
+      name: "Izin BPOM",
+      earned: bp.has_bpom,
+    },
+    {
+      icon: "™️",
+      name: "Merek Terdaftar",
+      earned: bp.has_merek,
+    },
+  ];
+}
 
 export const RECENT_ACTIONS = [
   { label: "Guide to Grow", detail: "NIB selesai ✅", completed: true },
