@@ -10,32 +10,54 @@ import {
 } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
 import { KULINER_STEPS } from "../../Dashboard/constants";
+import { CARD_META } from "../../../common/dashboard/featureMeta";
 
 interface RoadmapPageProps {
   user: UserProfile;
   onOpenChat: (stepId: string) => void;
 }
 
-export const RoadmapPage: React.FC<RoadmapPageProps> = ({ user, onOpenChat }) => {
-  const completedCount = KULINER_STEPS.filter((s) => s.status === "COMPLETED").length;
+export const RoadmapPage: React.FC<RoadmapPageProps> = ({
+  user,
+  onOpenChat,
+}) => {
+  const completedCount = KULINER_STEPS.filter(
+    (s) => s.status === "COMPLETED",
+  ).length;
   const progress = (completedCount / KULINER_STEPS.length) * 100;
+  const meta = CARD_META["roadmap"];
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-4xl md:text-5xl shadow-lg">
-            🗺️
+          <div
+            className={`w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg`}
+          >
+            {React.cloneElement(
+              meta.icon as React.ReactElement<{
+                size?: number;
+                className?: string;
+              }>,
+              {
+                size: 36,
+                className: "text-white",
+              },
+            )}
           </div>
           <div className="flex-1">
-            <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2">Guide to Grow</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2">
+              Guide to Grow
+            </h1>
             <p className="text-sm md:text-base text-gray-600 mb-4">
               Kuliner • {user.businessName}
             </p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs md:text-sm">
-                <span className="text-gray-600 font-medium">Progress Formalisasi</span>
+                <span className="text-gray-600 font-medium">
+                  Progress Formalisasi
+                </span>
                 <span className="text-amber-600 font-bold">
                   {completedCount}/{KULINER_STEPS.length} Step
                 </span>
@@ -46,7 +68,9 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({ user, onOpenChat }) =>
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500">{Math.round(progress)}% Selesai</p>
+              <p className="text-xs text-gray-500">
+                {Math.round(progress)}% Selesai
+              </p>
             </div>
           </div>
         </div>
@@ -115,7 +139,11 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({ user, onOpenChat }) =>
                                 : "bg-amber-100 text-amber-700"
                           }`}
                         >
-                          {isCompleted ? "✅ Selesai" : isUnlocked ? "→ Mulai Sekarang" : "🔒 Terkunci"}
+                          {isCompleted
+                            ? "✅ Selesai"
+                            : isUnlocked
+                              ? "→ Mulai Sekarang"
+                              : "🔒 Terkunci"}
                         </span>
                       </div>
 
@@ -128,11 +156,15 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({ user, onOpenChat }) =>
                       </p>
 
                       <div className="flex flex-wrap items-center gap-4 text-xs">
-                        <div className={`flex items-center gap-1 ${isLocked ? "text-gray-400" : "text-gray-500"}`}>
+                        <div
+                          className={`flex items-center gap-1 ${isLocked ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           <Wallet size={13} />
                           {step.cost}
                         </div>
-                        <div className={`flex items-center gap-1 ${isLocked ? "text-gray-400" : "text-gray-500"}`}>
+                        <div
+                          className={`flex items-center gap-1 ${isLocked ? "text-gray-400" : "text-gray-500"}`}
+                        >
                           <Clock size={13} />
                           {step.duration}
                         </div>
