@@ -26,12 +26,12 @@ interface ProfilePageProps {
   onSave: (updates: Partial<BusinessProfile>) => void;
 }
 
-const LEVEL_CONFIG: Record<string, { emoji: string; label: string; color: string }> = {
-  STARTER:     { emoji: "⭐", label: "Starter",     color: "from-gray-400 to-gray-500" },
-  GROWING:     { emoji: "🌱", label: "Growing",     color: "from-green-400 to-emerald-500" },
-  ESTABLISHED: { emoji: "🏢", label: "Established", color: "from-blue-400 to-blue-600" },
-  PRO:         { emoji: "🏆", label: "Pro",         color: "from-amber-400 to-orange-500" },
-  ENTERPRISE:  { emoji: "💎", label: "Enterprise",  color: "from-purple-400 to-purple-600" },
+const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
+  STARTER:     { label: "Starter",     color: "from-gray-400 to-gray-500" },
+  GROWING:     { label: "Growing",     color: "from-green-400 to-emerald-500" },
+  ESTABLISHED: { label: "Established", color: "from-blue-400 to-blue-600" },
+  PRO:         { label: "Pro",         color: "from-amber-400 to-orange-500" },
+  ENTERPRISE:  { label: "Enterprise",  color: "from-purple-400 to-purple-600" },
 };
 
 const BUSINESS_TYPES: { value: UserProfile["businessType"]; label: string }[] = [
@@ -194,7 +194,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             </p>
 
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${levelCfg.color} text-white text-sm font-bold shadow-md mb-5`}>
-              <span>{levelCfg.emoji}</span>
               <span>{levelCfg.label}</span>
             </div>
 
@@ -361,8 +360,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 label="Kode KBLI" icon={<FileText size={14} />}
                 value={draft.kbli_code} editing={isEditing}
                 onChange={(v) => set("kbli_code", v)}
-                placeholder="Gunakan AI Copilot untuk rekomendasi otomatis"
-                hint={!draft.kbli_code && isEditing ? "AI Copilot bisa bantu rekomendasikan kode KBLI yang sesuai" : undefined}
+                placeholder="Gunakan Fitur Scanner untuk rekomendasi otomatis"
+                hint={!draft.kbli_code && isEditing ? "Fitur Scanner bisa bantu rekomendasikan kode KBLI yang sesuai" : undefined}
               />
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
+import { CARD_META } from "../../../common/dashboard/featureMeta";
 
 interface Message {
   role: "user" | "assistant";
@@ -50,6 +51,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const meta = CARD_META["chat"];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -111,12 +113,25 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
       {/* Header */}
       <div className="p-4 md:p-5 border-b border-amber-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xl shadow">
-            🤖
+          <div
+            className={`w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg`}
+          >
+            {React.cloneElement(
+              meta.icon as React.ReactElement<{
+                size?: number;
+                className?: string;
+              }>,
+              {
+                size: 36,
+                className: "text-white",
+              },
+            )}
           </div>
           <div>
             <h2 className="font-bold text-gray-800 text-base">AI Copilot</h2>
-            <p className="text-gray-500 text-xs">Tanya apa saja soal legalitas usahamu</p>
+            <p className="text-gray-500 text-xs">
+              Tanya apa saja soal legalitas usahamu
+            </p>
           </div>
         </div>
       </div>

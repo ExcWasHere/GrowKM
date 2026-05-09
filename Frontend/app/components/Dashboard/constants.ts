@@ -59,31 +59,26 @@ export const KULINER_STEPS: FormalizationStep[] = [
 export const LEVEL_CONFIG = {
   STARTER: {
     label: "Starter",
-    emoji: "⭐",
     color: "from-gray-400 to-gray-500",
     range: "0–25%",
   },
   GROWING: {
     label: "Growing",
-    emoji: "",
     color: "from-amber-400 to-orange-500",
     range: "25–50%",
   },
   ESTABLISHED: {
     label: "Established",
-    emoji: "🏢",
     color: "from-orange-500 to-red-500",
     range: "50–75%",
   },
   PRO: {
     label: "Pro",
-    emoji: "🏆",
     color: "from-amber-500 to-yellow-400",
     range: "75–100%",
   },
   ENTERPRISE: {
     label: "Enterprise",
-    emoji: "💎",
     color: "from-yellow-400 to-amber-300",
     range: "100%",
   },
