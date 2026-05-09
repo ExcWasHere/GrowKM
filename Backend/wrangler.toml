@@ -3,7 +3,3 @@ main = "src/index.ts"
 compatibility_date = "2026-04-26"
 
 [vars]
-# SUPABASE_URL = ""
-# SUPABASE_ANON_KEY = ""
-# SUPABASE_SERVICE_ROLE_KEY = ""
-# GEMINI_API_KEY = ""
