@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Shield, AlertTriangle, CheckCircle, Search, Loader } from "lucide-react";
+import { AlertTriangle, CheckCircle, Search, Loader } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
+import { CARD_META } from "../../../common/dashboard/featureMeta";
 
 interface ScannerPageProps {
   user: UserProfile;
@@ -52,6 +53,7 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
   const [desc, setDesc] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const meta = CARD_META["scanner"];
 
   const runScan = async () => {
     if (!desc.trim()) return;
@@ -66,11 +68,24 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
       {/* Header */}
       <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-3xl shadow-lg">
-            🛡️
+          <div
+            className={`w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg`}
+          >
+            {React.cloneElement(
+              meta.icon as React.ReactElement<{
+                size?: number;
+                className?: string;
+              }>,
+              {
+                size: 36,
+                className: "text-white",
+              },
+            )}
           </div>
           <div>
-            <h2 className="font-bold text-gray-800 text-xl">Compliance Scanner</h2>
+            <h2 className="font-bold text-gray-800 text-xl">
+              Compliance Scanner
+            </h2>
             <p className="text-gray-500 text-sm">
               Deteksi KBLI yang tepat & cek kepatuhan izin usahamu
             </p>
@@ -95,7 +110,11 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
           disabled={!desc.trim() || loading}
           className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-40"
         >
-          {loading ? <Loader size={18} className="animate-spin" /> : <Search size={18} />}
+          {loading ? (
+            <Loader size={18} className="animate-spin" />
+          ) : (
+            <Search size={18} />
+          )}
           {loading ? "Menganalisis..." : "Scan KBLI"}
         </button>
       </div>
@@ -111,17 +130,27 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
         >
           <div className="flex items-start gap-3 mb-4">
             {result.status === "ok" ? (
-              <CheckCircle size={22} className="text-green-500 shrink-0 mt-0.5" />
+              <CheckCircle
+                size={22}
+                className="text-green-500 shrink-0 mt-0.5"
+              />
             ) : (
-              <AlertTriangle size={22} className="text-orange-500 shrink-0 mt-0.5" />
+              <AlertTriangle
+                size={22}
+                className="text-orange-500 shrink-0 mt-0.5"
+              />
             )}
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-black text-gray-800">{result.kbli}</span>
                 <span className="text-gray-400 text-sm">—</span>
-                <span className="text-gray-700 font-semibold text-sm">{result.label}</span>
+                <span className="text-gray-700 font-semibold text-sm">
+                  {result.label}
+                </span>
               </div>
-              <p className="text-gray-600 text-sm leading-relaxed">{result.message}</p>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {result.message}
+              </p>
             </div>
           </div>
 
@@ -130,7 +159,10 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
               Rekomendasi:
             </p>
             {result.suggestions.map((s, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
+              <div
+                key={i}
+                className="flex items-start gap-2 text-sm text-gray-700"
+              >
                 <span className="text-amber-500 shrink-0 mt-0.5">→</span>
                 {s}
               </div>
@@ -151,11 +183,15 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
               className="bg-amber-50 border border-amber-100 rounded-xl p-3.5 flex items-start gap-3"
             >
               <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                <span className="text-amber-700 font-black text-xs">{k.code}</span>
+                <span className="text-amber-700 font-black text-xs">
+                  {k.code}
+                </span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-gray-800 font-bold text-sm">{k.label}</span>
+                  <span className="text-gray-800 font-bold text-sm">
+                    {k.label}
+                  </span>
                   <span className="px-2 py-0.5 bg-amber-200 rounded-full text-amber-700 text-[10px] font-bold">
                     {k.risk}
                   </span>

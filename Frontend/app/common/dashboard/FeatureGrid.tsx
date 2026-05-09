@@ -1,51 +1,12 @@
 import React from "react";
-import { TrendingUp, Map, MessageSquare, ShieldCheck, BookOpen } from "lucide-react";
+import { TrendingUp, Map, } from "lucide-react";
 import type { Page } from "../../components/Dashboard/types";
 import { FEATURE_CARDS } from "../../components/Dashboard/constants";
+import { CARD_META } from "./featureMeta";
 
 interface FeatureGridProps {
   onNavigate: (page: Page) => void;
 }
-
-const CARD_META: Record<
-  string,
-  {
-    icon: React.ReactNode;
-    badge: string;
-    badgeClass: string;
-    iconClass: string;
-    desc: string;
-  }
-> = {
-  roadmap: {
-    icon: <Map size={20} />,
-    badge: "Panduan",
-    badgeClass: "bg-amber-100 text-amber-800",
-    iconClass: "bg-amber-100 text-amber-700",
-    desc: "Langkah formalisasi usaha yang dipersonalisasi",
-  },
-  chat: {
-    icon: <MessageSquare size={20} />,
-    badge: "AI Copilot",
-    badgeClass: "bg-orange-100 text-orange-800",
-    iconClass: "bg-orange-100 text-orange-700",
-    desc: "Konsultan bisnis digital siap membantu kapanpun",
-  },
-  scanner: {
-    icon: <ShieldCheck size={20} />,
-    badge: "Legalitas",
-    badgeClass: "bg-yellow-100 text-yellow-800",
-    iconClass: "bg-yellow-100 text-yellow-700",
-    desc: "Cek kelengkapan izin dan dokumen usahamu",
-  },
-  finance: {
-    icon: <BookOpen size={20} />,
-    badge: "Keuangan",
-    badgeClass: "bg-green-100 text-green-800",
-    iconClass: "bg-green-100 text-green-700",
-    desc: "Catat & pantau keuangan usaha dengan mudah",
-  },
-};
 
 export const FeatureGrid: React.FC<FeatureGridProps> = ({ onNavigate }) => {
   return (

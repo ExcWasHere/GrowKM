@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, TrendingUp, Flame } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
+import { CARD_META } from "../../../common/dashboard/featureMeta";
 
 interface FinancePageProps {
   user: UserProfile;
@@ -23,8 +24,12 @@ interface FinanceMessage {
 }
 
 const parseTransaction = (text: string): Transaction | null => {
-  const incomeMatch = text.match(/(\d+)\s*porsi.*?@\s*Rp?\s*(\d+(?:\.\d+)?(?:rb|ribu)?)/i);
-  const expenseMatch = text.match(/[Bb]elanja.*?Rp?\s*(\d+(?:\.\d+)?(?:rb|ribu)?)/i);
+  const incomeMatch = text.match(
+    /(\d+)\s*porsi.*?@\s*Rp?\s*(\d+(?:\.\d+)?(?:rb|ribu)?)/i,
+  );
+  const expenseMatch = text.match(
+    /[Bb]elanja.*?Rp?\s*(\d+(?:\.\d+)?(?:rb|ribu)?)/i,
+  );
 
   if (!incomeMatch && !expenseMatch) return null;
 
@@ -47,12 +52,19 @@ const parseTransaction = (text: string): Transaction | null => {
     expense,
     profit,
     margin,
-    timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+    timestamp: new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
   };
 };
 
 const fmtRp = (n: number) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
   const [messages, setMessages] = useState<FinanceMessage[]>([
@@ -64,6 +76,7 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
   const [input, setInput] = useState("");
   const [streak, setStreak] = useState(12);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const meta = CARD_META["finance"];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,28 +125,55 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
       {/* Header */}
       <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-3xl shadow-lg">
-            💰
+          <div
+            className={`w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg`}
+          >
+            {React.cloneElement(
+              meta.icon as React.ReactElement<{
+                size?: number;
+                className?: string;
+              }>,
+              {
+                size: 36,
+                className: "text-white",
+              },
+            )}
           </div>
           <div>
-            <h2 className="font-bold text-gray-800 text-xl">Financial Record</h2>
-            <p className="text-gray-500 text-sm">Catat keuangan via chat, auto laporan bank</p>
+            <h2 className="font-bold text-gray-800 text-xl">
+              Financial Record
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Catat keuangan via chat, auto laporan bank
+            </p>
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-green-600 font-bold uppercase mb-1">Pemasukan</p>
-            <p className="font-black text-green-700 text-sm">{fmtRp(totalIncome)}</p>
+            <p className="text-[10px] text-green-600 font-bold uppercase mb-1">
+              Pemasukan
+            </p>
+            <p className="font-black text-green-700 text-sm">
+              {fmtRp(totalIncome)}
+            </p>
           </div>
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-red-600 font-bold uppercase mb-1">Pengeluaran</p>
-            <p className="font-black text-red-700 text-sm">{fmtRp(totalExpense)}</p>
+            <p className="text-[10px] text-red-600 font-bold uppercase mb-1">
+              Pengeluaran
+            </p>
+            <p className="font-black text-red-700 text-sm">
+              {fmtRp(totalExpense)}
+            </p>
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-            <p className="text-[10px] text-amber-600 font-bold uppercase mb-1">Laba</p>
-            <p className="font-black text-amber-700 text-sm">{fmtRp(totalProfit)}</p>
+            <p className="text-[10px] text-amber-600 font-bold uppercase mb-1">
+              Laba
+            </p>
+            <p className="font-black text-amber-700 text-sm">
+              {fmtRp(totalProfit)}
+            </p>
           </div>
         </div>
 
@@ -141,7 +181,8 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
         <div className="mt-3 flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl">
           <Flame size={18} className="text-orange-500" />
           <p className="text-sm font-bold text-orange-700">
-            🔥 Streak <span className="text-orange-500">{streak} hari</span> mencatat!
+            🔥 Streak <span className="text-orange-500">{streak} hari</span>{" "}
+            mencatat!
           </p>
         </div>
       </div>
@@ -151,7 +192,9 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
         <div className="flex-1 overflow-y-auto space-y-3 p-4">
           {messages.map((msg, i) => (
             <div key={i}>
-              <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap ${
                     msg.role === "user"
@@ -168,19 +211,27 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <p className="text-gray-500">Pemasukan</p>
-                      <p className="font-black text-green-700">{fmtRp(msg.transaction.income)}</p>
+                      <p className="font-black text-green-700">
+                        {fmtRp(msg.transaction.income)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Bahan baku</p>
-                      <p className="font-black text-red-600">{fmtRp(msg.transaction.expense)}</p>
+                      <p className="font-black text-red-600">
+                        {fmtRp(msg.transaction.expense)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Laba kotor</p>
-                      <p className="font-black text-amber-700">{fmtRp(msg.transaction.profit)}</p>
+                      <p className="font-black text-amber-700">
+                        {fmtRp(msg.transaction.profit)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Margin</p>
-                      <p className="font-black text-amber-700">{msg.transaction.margin}%</p>
+                      <p className="font-black text-amber-700">
+                        {msg.transaction.margin}%
+                      </p>
                     </div>
                   </div>
                 </div>
