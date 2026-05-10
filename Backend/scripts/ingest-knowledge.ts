@@ -14,7 +14,7 @@ if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base_2');
+const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base_2/opportunities');
 
 interface Chunk {
     domain: string;

@@ -1,5 +1,4 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { apiReference } from '@scalar/hono-api-reference';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import apiRoutes from './routes';
@@ -32,13 +31,20 @@ app.doc('/openapi.json', {
     },
 });
 
-// Serve Scalar UI
-app.get('/reference', apiReference({
-    url: '/openapi.json',
-    theme: 'kepler',
-    layout: 'modern',
-    cdn: 'https://unpkg.com/@scalar/api-reference',
-}));
+// Serve Scalar UI — plain HTML so it works in both Bun and Cloudflare Workers.
+// @scalar/hono-api-reference pulls in Node.js deps that break the Workers V8 runtime.
+app.get('/reference', (c) => c.html(`<!doctype html>
+<html>
+  <head>
+    <title>GrowKM API Reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script id="api-reference" data-url="/openapi.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>`));
 
 app.get('/health', (c) => {
     return c.json({ status: 'ok', message: 'GrowKM API is running' });

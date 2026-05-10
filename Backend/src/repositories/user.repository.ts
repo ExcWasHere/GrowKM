@@ -3,6 +3,7 @@ import { Database } from '../types/database.types';
 
 type BusinessProfileInsert = Database['public']['Tables']['business_profiles']['Insert'];
 type BusinessProfileUpdate = Database['public']['Tables']['business_profiles']['Update'];
+type BusinessProfileFlagKey = keyof Pick<BusinessProfileUpdate, 'has_nib' | 'has_pirt' | 'has_halal' | 'has_bpom' | 'has_merek'>;
 
 // Get basic user profile
 export const getUserProfileById = async (supabase: SupabaseClient<Database>, id: string) => {
@@ -55,6 +56,24 @@ export const upsertBusinessProfile = async (
         throw new Error(`Failed to upsert business profile: ${error.message}`);
     }
 
+    return data;
+};
+
+// Update a single has_* flag when user marks a step as completed
+export const updateBusinessProfileFlag = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    flag: BusinessProfileFlagKey,
+    value: boolean,
+) => {
+    const { data, error } = await supabase
+        .from('business_profiles')
+        .update({ [flag]: value } as BusinessProfileUpdate)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    if (error) throw new Error(`Failed to update business profile flag: ${error.message}`);
     return data;
 };
 

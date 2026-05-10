@@ -1,8 +1,9 @@
 import { Database } from '../../types/database.types';
 
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
-export type StepType = Database['public']['Tables']['formalization_steps']['Insert']['step_type'];
-export type StepStatus = Database['public']['Tables']['formalization_steps']['Insert']['status'];
+export type StepType = Database['public']['Enums']['step_type_enum'];
+export type StepStatus = Database['public']['Enums']['step_status_enum'];
+export const VALID_STEP_TYPES: StepType[] = ['nib', 'spp_irt', 'halal', 'bpom', 'merek', 'sertifikat_standar'];
 
 export type RoadmapStep = {
     step_type: StepType;

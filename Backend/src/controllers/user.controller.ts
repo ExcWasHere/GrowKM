@@ -1,9 +1,11 @@
 import { Context } from 'hono';
 import { getAuthClient, getUserId } from '../middlewares/auth.middleware';
+import { AppError } from '../middlewares/error.middleware';
 import * as userService from '../services/business/user.service';
 import * as userRepository from '../repositories/user.repository';
 import { successResponse } from '../utils/response.util';
 import { UpsertBusinessProfileInput } from '../schemas/user.schema';
+import { StepType, StepStatus } from '../services/business/roadmap.service';
 
 // GET /api/users/me
 // Returns the logged-in user's basic profile and business profile
@@ -25,6 +27,17 @@ export const handleUpsertBusinessProfile = async (c: Context) => {
 
     const businessProfile = await userService.saveBusinessProfile(supabase, userId, validData, c.env);
     return successResponse(c, businessProfile, 'Business profile saved successfully', 200);
+};
+
+// PATCH /api/users/roadmap/:stepType/status
+// Marks a formalization step as in_progress or completed; auto-unlocks the next step when completed
+export const handleUpdateStepStatus = async (c: Context) => {
+    const supabase = getAuthClient(c);
+    const userId = getUserId(c);
+    const { step_type, status } = (await c.req.json()) as { step_type: StepType; status: StepStatus };
+
+    const result = await userService.updateStepStatus(supabase, userId, step_type, status);
+    return successResponse(c, result, 'Step status updated successfully');
 };
 
 // PATCH /api/users/business-profile/kbli

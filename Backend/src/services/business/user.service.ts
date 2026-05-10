@@ -7,7 +7,9 @@ import { generateRoadmap } from './roadmap.service';
 import { matchKBLI } from './kbli.service';
 import { UpsertBusinessProfileInput } from '../../schemas/user.schema';
 
-import { GetMeResponse, UpsertBusinessProfileResponse } from '../../types/responses';
+import { AppError } from '../../middlewares/error.middleware';
+import { GetMeResponse, UpsertBusinessProfileResponse, UpdateStepStatusResponse } from '../../types/responses';
+import { StepType, StepStatus } from './roadmap.service';
 
 export const getMyProfile = async (supabase: SupabaseClient<Database>, userId: string): Promise<GetMeResponse> => {
     const [user, businessProfile] = await Promise.all([
@@ -59,10 +61,69 @@ export const saveBusinessProfile = async (
         businessProfile.id,
         roadmapSteps,
     );
+    await roadmapRepository.deleteObsoleteSteps(
+        supabase,
+        businessProfile.id,
+        roadmapSteps.map(s => s.step_type),
+    );
 
     return {
         business_profile: businessProfile,
         kbli_recommendation: kbliResult,
         roadmap,
+    };
+};
+
+// Mapping step_type → has_* flag in business_profiles (same logic as roadmap.service FLAG_MAP)
+const STEP_FLAG_MAP: Partial<Record<StepType, 'has_nib' | 'has_pirt' | 'has_halal' | 'has_bpom' | 'has_merek'>> = {
+    nib:     'has_nib',
+    spp_irt: 'has_pirt',
+    halal:   'has_halal',
+    bpom:    'has_bpom',
+    merek:   'has_merek',
+    // sertifikat_standar has no dedicated flag — update step row only
+};
+
+export const updateStepStatus = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    stepType: StepType,
+    newStatus: StepStatus,
+): Promise<UpdateStepStatusResponse> => {
+    const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
+    if (!businessProfile) throw new AppError(404, 'Business profile not found');
+
+    const profileId = businessProfile.id;
+
+    const currentStep = await roadmapRepository.getStepByType(supabase, profileId, stepType);
+    if (!currentStep) throw new AppError(404, `Step '${stepType}' tidak ditemukan di roadmap kamu`);
+    if (currentStep.status === 'locked') {
+        throw new AppError(400, `Step '${stepType}' masih terkunci. Selesaikan langkah sebelumnya terlebih dahulu`);
+    }
+
+    const flagKey = STEP_FLAG_MAP[stepType];
+
+    if (newStatus === 'completed' && flagKey) {
+        // Update has_* flag → re-fetch profile → regenerate full roadmap
+        // This ensures next step auto-unlocks and all statuses stay consistent
+        await userRepository.updateBusinessProfileFlag(supabase, userId, flagKey, true);
+        const updatedProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
+        const roadmapSteps = generateRoadmap(updatedProfile!);
+        const allSteps = await roadmapRepository.upsertFormalizationSteps(supabase, profileId, roadmapSteps);
+        await roadmapRepository.deleteObsoleteSteps(supabase, profileId, roadmapSteps.map(s => s.step_type));
+        const completedCount = allSteps.filter(s => s.status === 'completed').length;
+        return {
+            steps: allSteps,
+            progress_percentage: Math.round((completedCount / allSteps.length) * 100),
+        };
+    }
+
+    // For in_progress, or completed on sertifikat_standar (no flag) — update just the one step
+    await roadmapRepository.updateStepStatus(supabase, profileId, stepType, newStatus);
+    const allSteps = await roadmapRepository.getFormalizationStepsByProfileId(supabase, profileId);
+    const completedCount = allSteps.filter(s => s.status === 'completed').length;
+    return {
+        steps: allSteps,
+        progress_percentage: Math.round((completedCount / allSteps.length) * 100),
     };
 };
