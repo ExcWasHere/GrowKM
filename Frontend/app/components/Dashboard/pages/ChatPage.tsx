@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Send,
   Bot,
   User,
-  Loader,
   History,
   Trash2,
   Plus,
@@ -15,6 +16,7 @@ import {
 import type { UserProfile } from "../../Dashboard/types";
 import { CARD_META } from "../../../common/dashboard/featureMeta";
 import { apiFetch } from "../../../lib/api";
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -67,6 +69,93 @@ function formatRelativeTime(dateStr: string): string {
 function getSessionPreview(session: ChatSession): string {
   return session.preview ?? session.title ?? "Sesi percakapan";
 }
+
+const AssistantMarkdown: React.FC<{ content: string }> = ({ content }) => (
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      p: ({ children }) => (
+        <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>
+      ),
+      strong: ({ children }) => (
+        <strong className="font-semibold text-gray-900">{children}</strong>
+      ),
+      em: ({ children }) => (
+        <em className="italic text-gray-700">{children}</em>
+      ),
+      h1: ({ children }) => (
+        <h1 className="font-bold text-base text-gray-900 mt-3 mb-1.5">{children}</h1>
+      ),
+      h2: ({ children }) => (
+        <h2 className="font-bold text-sm text-gray-900 mt-3 mb-1">{children}</h2>
+      ),
+      h3: ({ children }) => (
+        <h3 className="font-semibold text-sm text-gray-800 mt-2 mb-1">{children}</h3>
+      ),
+      ul: ({ children }) => (
+        <ul className="space-y-1 my-2 ml-1">{children}</ul>
+      ),
+      ol: ({ children }) => (
+        <ol className="space-y-1 my-2 ml-1 list-decimal list-inside">{children}</ol>
+      ),
+      li: ({ children }) => (
+        <li className="flex items-start gap-2 text-sm">
+          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+          <span className="flex-1">{children}</span>
+        </li>
+      ),
+      code: ({ children, className }) => {
+        const isBlock = className?.includes("language-");
+        if (isBlock) {
+          return (
+            <pre className="my-2 p-3 bg-gray-100 rounded-lg overflow-x-auto text-xs font-mono text-gray-800 border border-gray-200">
+              <code>{children}</code>
+            </pre>
+          );
+        }
+        return (
+          <code className="px-1.5 py-0.5 bg-amber-50 border border-amber-200 rounded text-xs font-mono text-amber-700">
+            {children}
+          </code>
+        );
+      },
+      blockquote: ({ children }) => (
+        <blockquote className="my-2 pl-3 border-l-2 border-amber-400 text-gray-600 italic text-sm">
+          {children}
+        </blockquote>
+      ),
+      hr: () => <hr className="my-3 border-gray-200" />,
+      a: ({ href, children }) => (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-600 underline underline-offset-2 hover:text-amber-700 transition-colors"
+        >
+          {children}
+        </a>
+      ),
+      table: ({ children }) => (
+        <div className="my-2 overflow-x-auto rounded-lg border border-gray-200">
+          <table className="w-full text-xs border-collapse">{children}</table>
+        </div>
+      ),
+      thead: ({ children }) => (
+        <thead className="bg-amber-50 text-gray-700">{children}</thead>
+      ),
+      th: ({ children }) => (
+        <th className="px-3 py-2 text-left font-semibold border-b border-gray-200">
+          {children}
+        </th>
+      ),
+      td: ({ children }) => (
+        <td className="px-3 py-2 border-b border-gray-100">{children}</td>
+      ),
+    }}
+  >
+    {content}
+  </ReactMarkdown>
+);
 
 interface DeleteConfirmProps {
   onConfirm: () => void;
@@ -185,8 +274,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     {
       role: "assistant",
       content: initialContext
-        ? `Halo ${user.name}! 👋 Saya siap bantu kamu soal ${initialContext}. Apa yang ingin kamu ketahui?`
-        : `Halo ${user.name}! 👋 Saya Lexa, Tanya apa saja soal proses perizinan dan formalisasi usaha ${user.businessName} ya!`,
+        ? `Halo ${user.name}! 👋 Saya siap bantu kamu soal **${initialContext}**. Apa yang ingin kamu ketahui?`
+        : `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.businessName}** ya!`,
     },
   ]);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -216,24 +305,26 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     }
   }, []);
 
-  const loadSession = useCallback(async (id: string) => {
-    try {
-      const res = await apiFetch(`/api/chat/sessions/${id}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const sessionData = data.data;
-      const history: Message[] = (sessionData.messages ?? []).map(
-        (m: { role: string; content: string }) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })
-      );
-      setMessages(history.length > 0 ? history : messages);
-      setSessionId(id);
-      setSidebarOpen(false);
-    } catch {
-    }
-  }, [messages]);
+  const loadSession = useCallback(
+    async (id: string) => {
+      try {
+        const res = await apiFetch(`/api/chat/sessions/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const sessionData = data.data;
+        const history: Message[] = (sessionData.messages ?? []).map(
+          (m: { role: string; content: string }) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })
+        );
+        setMessages(history.length > 0 ? history : messages);
+        setSessionId(id);
+        setSidebarOpen(false);
+      } catch {}
+    },
+    [messages]
+  );
 
   const deleteSession = useCallback(
     async (id: string) => {
@@ -246,8 +337,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
         if (id === sessionId) {
           startNewChat();
         }
-      } catch {
-      }
+      } catch {}
     },
     [sessionId]
   );
@@ -257,7 +347,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     setMessages([
       {
         role: "assistant",
-        content: `Halo ${user.name}! 👋 Saya Lexa, Tanya apa saja soal proses perizinan dan formalisasi usaha ${user.businessName} ya!`,
+        content: `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.businessName}** ya!`,
       },
     ]);
     setSidebarOpen(false);
@@ -300,7 +390,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const data = await res.json();
       const result = data.data;
 
@@ -318,7 +407,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
         ...newMessages,
         {
           role: "assistant",
-          content: "Maaf, koneksi bermasalah. Coba lagi ya!",
+          content: "Maaf, koneksi bermasalah. Coba lagi ya! 🙏",
         },
       ]);
     } finally {
@@ -335,7 +424,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
 
   return (
     <>
-      {/* CSS Animations */}
       <style>{`
         @keyframes popIn {
           from { opacity: 0; transform: scale(0.85) translateY(8px); }
@@ -353,10 +441,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
         .msg-assistant { animation: slideInLeft 0.25s ease both; }
         .msg-user      { animation: slideInRight 0.25s ease both; }
         .quick-chip    { animation: fadeUp 0.3s ease both; }
@@ -372,6 +456,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
         }
         .typing-dot:nth-child(2) { animation-delay: 0.15s; }
         .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Override li bullet untuk ordered list — gunakan counter bawaan */
+        ol .flex { display: list-item; list-style: decimal; margin-left: 1rem; }
+        ol .flex span.rounded-full { display: none; }
       `}</style>
 
       <div className="flex gap-4 h-[calc(100vh-12rem)] md:h-[calc(100vh-10rem)]">
@@ -382,7 +470,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
           }`}
         >
           <div className="w-64 h-full bg-white rounded-xl border border-amber-200 shadow-sm flex flex-col">
-            {/* Sidebar Header */}
             <div className="p-4 border-b border-amber-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <History size={15} className="text-amber-500" />
@@ -398,7 +485,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
               </button>
             </div>
 
-            {/* New Chat Button */}
             <div className="p-3 shrink-0">
               <button
                 onClick={startNewChat}
@@ -409,7 +495,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
               </button>
             </div>
 
-            {/* Sessions List */}
             <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
               {sessionsLoading ? (
                 <div className="flex flex-col gap-2 p-2">
@@ -453,7 +538,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
           {/* Header */}
           <div className="p-4 md:p-5 border-b border-amber-100 shrink-0">
             <div className="flex items-center gap-3">
-              {/* Sidebar Toggle */}
               <button
                 onClick={handleToggleSidebar}
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
@@ -470,7 +554,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                 )}
               </button>
 
-              {/* Avatar */}
               <div
                 className={`w-14 h-14 md:w-16 md:h-16 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg shrink-0`}
               >
@@ -492,7 +575,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                 </p>
               </div>
 
-              {/* New Chat */}
               <button
                 onClick={startNewChat}
                 className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500 transition-all shrink-0"
@@ -524,8 +606,13 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse msg-user" : "flex-row msg-assistant"}`}
+                className={`flex gap-3 ${
+                  msg.role === "user"
+                    ? "flex-row-reverse msg-user"
+                    : "flex-row msg-assistant"
+                }`}
               >
+                {/* Avatar */}
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                     msg.role === "assistant"
@@ -539,14 +626,20 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                     <User size={16} className="text-gray-600" />
                   )}
                 </div>
+
+                {/* Bubble */}
                 <div
-                  className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === "assistant"
                       ? "bg-gray-50 border border-gray-200 text-gray-800"
-                      : "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200"
+                      : "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 whitespace-pre-wrap"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <AssistantMarkdown content={msg.content} />
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
