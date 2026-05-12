@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
 import { CARD_META } from "../../../common/dashboard/featureMeta";
+import { apiFetch } from "../../../lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -13,24 +14,15 @@ interface ChatPageProps {
   initialContext?: string;
 }
 
-const buildSystemPrompt = (user: UserProfile): string =>
-  `Kamu adalah GrowKM AI Copilot — asisten khusus yang membantu UMKM Indonesia dalam proses formalisasi dan legalitas usaha. Kamu berbicara dengan ramah, jelas, dan to-the-point dalam Bahasa Indonesia.
-Profil Pengguna:
-- Nama: ${user.name}
-- Usaha: ${user.businessName}
-- Jenis: ${user.businessType}
-- Kota: ${user.city}
-- Status izin: NIB sudah punya, sedang mengurus SPP-IRT
-
-Knowledge kamu mencakup:
-- NIB via oss.go.id (gratis, 1 hari)
-- SPP-IRT via Dinas Kesehatan (Rp 0-200rb, 2-4 minggu)
-- Sertifikat Halal via SEHATI di ptsp.halal.go.id (gratis, 2-6 minggu)
-- Pendaftaran Merek via DJKI dgip.go.id (Rp 500rb tarif UMK, 6-9 bulan)
-- KBLI 2025 dan risiko usaha
-- KUR bunga 3% syaratnya harus punya NIB + laporan keuangan
-
-Jawab pertanyaan soal legalitas, perizinan, dan formalisasi usaha dengan akurat dan praktis. Selalu personalisasi jawaban sesuai profil pengguna.`;
+const STEP_TYPES = [
+  "nib",
+  "spp_irt",
+  "halal",
+  "bpom",
+  "merek",
+  "sertifikat_standar",
+] as const;
+type StepType = (typeof STEP_TYPES)[number];
 
 const QUICK_QUESTIONS = [
   "Apa syarat SPP-IRT?",
@@ -44,10 +36,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     {
       role: "assistant",
       content: initialContext
-        ? `Halo ${user.name}! 👋 Saya siap bantu kamu soal **${initialContext}**. Apa yang ingin kamu ketahui?`
-        : `Halo ${user.name}! 👋 Saya GrowKM AI Copilot. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.businessName}** ya!`,
+        ? `Halo ${user.name}! 👋 Saya siap bantu kamu soal ${initialContext}. Apa yang ingin kamu ketahui?`
+        : `Halo ${user.name}! 👋 Saya Lexa, Tanya apa saja soal proses perizinan dan formalisasi usaha ${user.businessName} ya!`,
     },
   ]);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -70,24 +63,36 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const isFirstMessage = !sessionId;
+      const contextStepType =
+        isFirstMessage &&
+        initialContext &&
+        (STEP_TYPES as readonly string[]).includes(initialContext)
+          ? (initialContext as StepType)
+          : undefined;
+
+      const res = await apiFetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: buildSystemPrompt(user),
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          message: messageText,
+          ...(sessionId && { session_id: sessionId }),
+          ...(contextStepType && { context_step_type: contextStepType }),
         }),
       });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const data = await res.json();
-      const reply =
-        data.content?.find((c: { type: string }) => c.type === "text")?.text ||
-        "Maaf, ada kendala. Coba lagi ya!";
-      setMessages([...newMessages, { role: "assistant", content: reply }]);
+      const result = data.data;
+
+      if (!sessionId && result.session_id) {
+        setSessionId(result.session_id);
+      }
+
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: result.ai_response },
+      ]);
     } catch {
       setMessages([
         ...newMessages,
@@ -121,14 +126,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                 size?: number;
                 className?: string;
               }>,
-              {
-                size: 36,
-                className: "text-white",
-              },
+              { size: 36, className: "text-white" }
             )}
           </div>
           <div>
-            <h2 className="font-bold text-gray-800 text-base">AI Copilot</h2>
+            <h2 className="font-bold text-gray-800 text-base">Lexa AI</h2>
             <p className="text-gray-500 text-xs">
               Tanya apa saja soal legalitas usahamu
             </p>

@@ -21,10 +21,10 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { page: "dashboard" as Page, label: "Beranda", icon: Home },
+  { page: "dashboard" as Page, label: "Home", icon: Home },
   { page: "roadmap" as Page, label: "Guide to Grow", icon: Map },
   { page: "scanner" as Page, label: "Scanner", icon: Shield },
-  { page: "chat" as Page, label: "Tanya AI Copilot", icon: MessageCircle },
+  { page: "chat" as Page, label: "Ask Lexa", icon: MessageCircle },
   { page: "finance" as Page, label: "Financial Record", icon: DollarSign },
 ];
 
@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <h2 className="font-black text-amber-600 text-base leading-none">
               GrowKM
             </h2>
-            <p className="text-[11px] text-gray-500">UMKM Copilot</p>
+            <p className="text-[11px] text-gray-500">UMKM Berbasis AI</p>
           </div>
         </div>
         {isMobile && (

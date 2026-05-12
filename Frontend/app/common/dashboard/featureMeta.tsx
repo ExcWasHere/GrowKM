@@ -21,7 +21,7 @@ export const CARD_META: Record<string, CardMeta> = {
   },
   chat: {
     icon: createElement(MessageSquare, { size: 20 }),
-    badge: "AI Copilot",
+    badge: "Lexa AI",
     badgeClass: "bg-orange-100 text-orange-800",
     iconClass: "bg-orange-100 text-orange-700",
     gradientClass: "from-amber-400 to-orange-500",

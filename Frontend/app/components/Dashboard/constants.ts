@@ -121,7 +121,7 @@ export const FEATURE_CARDS = [
   {
     id: "chat",
     icon: "🤖",
-    title: "Tanya AI Copilot",
+    title: "Tanya Lexa AI",
     subtitle: "Regulasi & Perizinan",
     description: "Tanya apa saja soal proses perizinan usahamu",
     color: "from-amber-500 to-orange-400",
