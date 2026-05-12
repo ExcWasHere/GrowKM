@@ -181,7 +181,7 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
                           onClick={() => onOpenChat(step.id)}
                           className="mt-3 text-xs md:text-sm font-bold text-amber-600 hover:text-orange-600 flex items-center gap-1"
                         >
-                          Tanya AI Copilot
+                          Tanya Lexa AI
                           <ChevronRight size={16} />
                         </button>
                       )}
