@@ -136,27 +136,27 @@ export function getBadges(bp: BusinessProfile) {
     {
       icon: "🏛️",
       name: "Punya NIB",
-      earned: bp.has_nib,
+      earned: !!bp.nib_image,
     },
     {
       icon: "🍽️",
       name: "SPP-IRT / PIRT",
-      earned: bp.has_pirt,
+      earned: !!bp.pirt_image,
     },
     {
       icon: "☪️",
       name: "Sertifikat Halal",
-      earned: bp.has_halal,
+      earned: !!bp.halal_image,
     },
     {
       icon: "💊",
       name: "Izin BPOM",
-      earned: bp.has_bpom,
+      earned: !!bp.bpom_image,
     },
     {
       icon: "™️",
       name: "Merek Terdaftar",
-      earned: bp.has_merek,
+      earned: !!bp.merek_image,
     },
   ];
 }
