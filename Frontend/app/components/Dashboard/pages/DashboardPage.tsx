@@ -27,13 +27,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   user,
   businessProfile,
   onNavigate,
-  onUpdateBusinessProfile,
 }) => {
   const levelCfg = LEVEL_CONFIG[user.level];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
-      {/* ── Main Content (kiri) ── */}
+      {/* Main Content */}
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
         {/* Level/Progress Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
@@ -77,7 +76,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <BadgesCard businessProfile={businessProfile} className="lg:hidden" />
       </div>
 
-      {/* ── Sidebar (kanan, desktop only) ── */}
+      {/* Sidebar */}
       <div className="hidden lg:flex lg:col-span-4 flex-col gap-6">
         <ProfileCard user={user} />
         <BadgesCard businessProfile={businessProfile} />
@@ -85,8 +84,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     </div>
   );
 };
-
-// ─── Profile Card ────────────────────────────────────────────────────────────
 
 const ProfileCard: React.FC<{ user: UserProfile; className?: string }> = ({
   user,
@@ -124,8 +121,6 @@ const ProfileCard: React.FC<{ user: UserProfile; className?: string }> = ({
     </div>
   );
 };
-
-// ─── Badges Card ─────────────────────────────────────────────────────────────
 
 const BadgesCard: React.FC<{
   businessProfile: BusinessProfile;
@@ -183,8 +178,6 @@ const BadgesCard: React.FC<{
   );
 };
 
-// ─── Formalization Slider ─────────────────────────────────────────────────────
-
 const CERT_LIST = [
   {
     key: "has_nib",
@@ -223,7 +216,6 @@ const CERT_LIST = [
   },
 ] as const;
 
-type CertKey = (typeof CERT_LIST)[number]["key"];
 type CertImageKey = (typeof CERT_LIST)[number]["imageKey"];
 
 interface FormalizationSliderProps {
