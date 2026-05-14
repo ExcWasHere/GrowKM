@@ -280,6 +280,129 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          additional_requirements: string[]
+          business_types: Database["public"]["Enums"]["business_type_enum"][]
+          category: Database["public"]["Enums"]["opportunity_category_enum"]
+          created_at: string
+          deadline: string | null
+          description: string | null
+          estimated_value: string | null
+          id: string
+          is_active: boolean
+          last_verified: string
+          max_annual_revenue: number
+          min_annual_revenue: number
+          nice_to_have_steps: Database["public"]["Enums"]["step_type_enum"][]
+          provider: string
+          region: string
+          required_steps: Database["public"]["Enums"]["step_type_enum"][]
+          source_url: string | null
+          title: string
+          updated_at: string
+          value_description: string | null
+        }
+        Insert: {
+          additional_requirements?: string[]
+          business_types?: Database["public"]["Enums"]["business_type_enum"][]
+          category: Database["public"]["Enums"]["opportunity_category_enum"]
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          estimated_value?: string | null
+          id?: string
+          is_active?: boolean
+          last_verified?: string
+          max_annual_revenue?: number
+          min_annual_revenue?: number
+          nice_to_have_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          provider: string
+          region?: string
+          required_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          source_url?: string | null
+          title: string
+          updated_at?: string
+          value_description?: string | null
+        }
+        Update: {
+          additional_requirements?: string[]
+          business_types?: Database["public"]["Enums"]["business_type_enum"][]
+          category?: Database["public"]["Enums"]["opportunity_category_enum"]
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          estimated_value?: string | null
+          id?: string
+          is_active?: boolean
+          last_verified?: string
+          max_annual_revenue?: number
+          min_annual_revenue?: number
+          nice_to_have_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          provider?: string
+          region?: string
+          required_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+          value_description?: string | null
+        }
+        Relationships: []
+      }
+      user_opportunity_matches: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          id: string
+          match_score: number
+          match_status: Database["public"]["Enums"]["match_status_enum"]
+          missing_steps: Database["public"]["Enums"]["step_type_enum"][]
+          opportunity_id: string
+          seen_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          id?: string
+          match_score?: number
+          match_status: Database["public"]["Enums"]["match_status_enum"]
+          missing_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          opportunity_id: string
+          seen_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          id?: string
+          match_score?: number
+          match_status?: Database["public"]["Enums"]["match_status_enum"]
+          missing_steps?: Database["public"]["Enums"]["step_type_enum"][]
+          opportunity_id?: string
+          seen_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_opportunity_matches_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_opportunity_matches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
@@ -331,6 +454,13 @@ export type Database = {
         | "lainnya"
       financial_type_enum: "income" | "expense"
       level_enum: "starter" | "growing" | "established" | "pro" | "enterprise"
+      match_status_enum: "eligible" | "almost" | "locked"
+      opportunity_category_enum:
+        | "pembiayaan"
+        | "vendor_supply_chain"
+        | "marketplace"
+        | "program_pemerintah"
+        | "event_pameran"
       session_type_enum: "onboarding" | "copilot" | "financial_parser"
       step_status_enum: "locked" | "unlocked" | "in_progress" | "completed"
       step_type_enum:
@@ -475,6 +605,14 @@ export const Constants = {
       ],
       financial_type_enum: ["income", "expense"],
       level_enum: ["starter", "growing", "established", "pro", "enterprise"],
+      match_status_enum: ["eligible", "almost", "locked"],
+      opportunity_category_enum: [
+        "pembiayaan",
+        "vendor_supply_chain",
+        "marketplace",
+        "program_pemerintah",
+        "event_pameran",
+      ],
       session_type_enum: ["onboarding", "copilot", "financial_parser"],
       step_status_enum: ["locked", "unlocked", "in_progress", "completed"],
       step_type_enum: [

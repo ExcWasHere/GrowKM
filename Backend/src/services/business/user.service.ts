@@ -5,6 +5,7 @@ import * as userRepository from '../../repositories/user.repository';
 import * as roadmapRepository from '../../repositories/roadmap.repository';
 import { generateRoadmap } from './roadmap.service';
 import { matchKBLI } from './kbli.service';
+import { runMatchingAndSave } from './opportunity.service';
 import { UpsertBusinessProfileInput } from '../../schemas/user.schema';
 
 import { AppError } from '../../middlewares/error.middleware';
@@ -67,6 +68,14 @@ export const saveBusinessProfile = async (
         roadmapSteps.map(s => s.step_type),
     );
 
+    // Run matching engine (fire-and-forget — don't block the response)
+    const completedSteps = roadmapSteps
+        .filter(s => s.status === 'completed')
+        .map(s => s.step_type);
+    runMatchingAndSave(supabase, userId, businessProfile, completedSteps).catch(err =>
+        console.error('[MatchingEngine] Failed during onboarding:', err),
+    );
+
     return {
         business_profile: businessProfile,
         kbli_recommendation: kbliResult,
@@ -112,6 +121,15 @@ export const updateStepStatus = async (
         const allSteps = await roadmapRepository.upsertFormalizationSteps(supabase, profileId, roadmapSteps);
         await roadmapRepository.deleteObsoleteSteps(supabase, profileId, roadmapSteps.map(s => s.step_type));
         const completedCount = allSteps.filter(s => s.status === 'completed').length;
+
+        // Re-run matching engine with updated completed steps (fire-and-forget)
+        const completedSteps = allSteps
+            .filter(s => s.status === 'completed')
+            .map(s => s.step_type);
+        runMatchingAndSave(supabase, userId, updatedProfile!, completedSteps).catch(err =>
+            console.error('[MatchingEngine] Failed after step completion:', err),
+        );
+
         return {
             steps: allSteps,
             progress_percentage: Math.round((completedCount / allSteps.length) * 100),

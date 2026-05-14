@@ -5,6 +5,15 @@ import { successResponse } from '../utils/response.util';
 import * as chatRepository from '../repositories/chat.repository';
 import * as chatService from '../services/business/chat.service';
 import { HonoEnv } from '../types/env';
+import { Database } from '../types/database.types';
+
+type StepType = Database['public']['Enums']['step_type_enum'];
+
+interface ChatRequestBody {
+    message: string;
+    session_id?: string;
+    context_step_type?: StepType;
+}
 
 // POST /api/chat
 // Sends a message to the AI Copilot. Auto-creates a new session if session_id is not provided.
@@ -12,15 +21,19 @@ import { HonoEnv } from '../types/env';
 export const handleChat = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
-    const body = await c.req.json() as { message: string; session_id?: string; context_step_type?: string };
+
+    const body = await c.req.json() as ChatRequestBody;
+    if (!body?.message || typeof body.message !== 'string' || body.message.trim() === '') {
+        throw new AppError(400, '"message" is required and must be a non-empty string');
+    }
 
     const result = await chatService.chat(
         supabase,
         c.env,
         userId,
-        body.message,
-        body.session_id,
-        body.context_step_type as any,
+        body.message.trim(),
+        body.session_id || undefined,
+        body.context_step_type,
     );
     return successResponse(c, result, 'AI response generated');
 };

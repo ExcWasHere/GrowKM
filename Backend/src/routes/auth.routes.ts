@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { createClient } from '@supabase/supabase-js';
 import { HonoEnv } from '../types/env';
+import { createSupabaseClient } from '../config/supabase';
 
 const authRoutes = new OpenAPIHono<HonoEnv>();
 
@@ -57,10 +57,7 @@ const registerRoute = createRoute({
 
 authRoutes.openapi(loginRoute, async (c) => {
     const { email, password } = c.req.valid('json');
-    const supabaseUrl = c.env?.SUPABASE_URL || process.env.SUPABASE_URL!;
-    const supabaseKey = c.env?.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY!;
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createSupabaseClient(c.env);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
@@ -72,10 +69,7 @@ authRoutes.openapi(loginRoute, async (c) => {
 
 authRoutes.openapi(registerRoute, async (c) => {
     const { email, password, data: metaData } = c.req.valid('json');
-    const supabaseUrl = c.env?.SUPABASE_URL || process.env.SUPABASE_URL!;
-    const supabaseKey = c.env?.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY!;
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createSupabaseClient(c.env);
     const { data, error } = await supabase.auth.signUp({
         email,
         password,

@@ -1,3 +1,6 @@
+import { User } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from './database.types';
 
 export type EnvBindings = {
     SUPABASE_URL: string;
@@ -7,14 +10,13 @@ export type EnvBindings = {
     AZURE_OPENAI_API_KEY: string;
     AZURE_OPENAI_ENDPOINT: string;
     AZURE_OPENAI_DEPLOYMENT_NAME: string;
-
 };
 
 export type HonoEnv = {
     Bindings: EnvBindings;
     Variables: {
         userId: string;
-        user: object;
-        supabase: unknown;
+        user: User;
+        supabase: SupabaseClient<Database>;
     };
 };
