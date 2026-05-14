@@ -14,7 +14,7 @@ import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage";
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
   roadmap: "Guide to Grow",
-  chat: "Tanya AI Copilot",
+  chat: "Tanya Lexa AI",
   scanner: "Compliance Scanner",
   finance: "Financial Record",
   profile: "Business Profile",

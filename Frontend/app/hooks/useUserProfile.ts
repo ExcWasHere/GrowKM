@@ -17,6 +17,11 @@ export interface BusinessProfile {
   has_halal: boolean;
   has_bpom: boolean;
   has_merek: boolean;
+  nib_image?: string;
+  pirt_image?: string;
+  halal_image?: string;
+  bpom_image?: string;
+  merek_image?: string;
   onboarding_completed: boolean;
 }
 
@@ -38,6 +43,11 @@ const DEFAULT_BUSINESS: BusinessProfile = {
   has_halal: false,
   has_bpom: false,
   has_merek: false,
+  nib_image: undefined,
+  pirt_image: undefined,
+  halal_image: undefined,
+  bpom_image: undefined,
+  merek_image: undefined,
   onboarding_completed: false,
 };
 

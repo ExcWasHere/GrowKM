@@ -13,7 +13,6 @@ router.route('/auth', authRoutes);
 
 // Protected Routes
 router.use('/*', authMiddleware);
-
 router.route('/users', userRoutes);
 router.route('/chat', chatRoutes);
 router.route('/opportunities', opportunityRoutes);
