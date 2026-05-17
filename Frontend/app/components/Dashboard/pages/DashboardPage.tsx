@@ -183,35 +183,30 @@ const CERT_LIST = [
     key: "has_nib",
     label: "NIB",
     desc: "Nomor Induk Berusaha",
-    icon: "🏛️",
     imageKey: "nib_image",
   },
   {
     key: "has_pirt",
     label: "SPP-IRT / PIRT",
     desc: "Izin pangan rumah tangga",
-    icon: "🍽️",
     imageKey: "pirt_image",
   },
   {
     key: "has_halal",
     label: "Halal",
     desc: "Sertifikat Halal MUI / BPJPH",
-    icon: "☪️",
     imageKey: "halal_image",
   },
   {
     key: "has_bpom",
     label: "BPOM",
     desc: "Izin edar BPOM",
-    icon: "💊",
     imageKey: "bpom_image",
   },
   {
     key: "has_merek",
     label: "Merek",
     desc: "Pendaftaran merek DJKI",
-    icon: "™️",
     imageKey: "merek_image",
   },
 ] as const;
@@ -284,7 +279,7 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
         className="grid gap-3 mb-4"
         style={{ gridTemplateColumns: `repeat(${perPage}, minmax(0, 1fr))` }}
       >
-        {slice.map(({ label, desc, icon, imageKey }) => {
+        {slice.map(({ label, desc, imageKey }) => {
           const imageData = imageValueMap[imageKey];
 
           return imageData ? (
@@ -325,7 +320,6 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
               className="rounded-xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2 p-3 text-center"
               style={{ aspectRatio: "1 / 1.1" }}
             >
-              <span className="text-2xl opacity-40">{icon}</span>
               <p className="text-[11px] font-bold text-gray-700 leading-tight">
                 {label}
               </p>
