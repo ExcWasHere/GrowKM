@@ -8,7 +8,20 @@ import { HonoEnv } from './types/env';
 const app = new OpenAPIHono<HonoEnv>();
 
 app.use('*', logger());
-app.use('*', cors());
+
+app.use(
+  '*',
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'https://growkm.pages.dev',
+    ],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+
 app.onError(errorHandler);
 
 app.route('/api', apiRoutes);
