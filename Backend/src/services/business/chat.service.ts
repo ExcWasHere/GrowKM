@@ -53,7 +53,7 @@ function buildSystemPrompt(
         ? `\nKNOWLEDGE BASE — gunakan HANYA informasi berikut sebagai referensi:\n\n${chunks.map(c => `### ${c.title}\n${c.content}`).join('\n\n---\n\n')}`
         : '\nKNOWLEDGE BASE: Tidak ada informasi spesifik yang ditemukan untuk pertanyaan ini.';
 
-    return `Kamu adalah GrowKM Copilot — asisten AI yang membantu UMKM Indonesia memahami dan menyelesaikan proses formalisasi usaha (NIB, SPP-IRT, Sertifikat Halal, BPOM, Merek, dll.).
+    return `Kamu adalah Lexa AI — asisten AI yang membantu UMKM Indonesia memahami dan menyelesaikan proses formalisasi usaha (NIB, SPP-IRT, Sertifikat Halal, BPOM, Merek, dll.).
 
 ${profileSection}
 ${stepSection}
