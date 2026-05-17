@@ -8,6 +8,7 @@ import {
   LogOut,
   X,
   User,
+  BarChart2,
 } from "lucide-react";
 import type { Page, UserProfile } from "../../components/Dashboard/types";
 
@@ -23,21 +24,14 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { page: "dashboard" as Page, label: "Home", icon: Home },
   { page: "roadmap" as Page, label: "Guide to Grow", icon: Map },
-  { page: "scanner" as Page, label: "Scanner", icon: Shield },
-  { page: "chat" as Page, label: "Ask Lexa", icon: MessageCircle },
-  { page: "finance" as Page, label: "Financial Record", icon: DollarSign },
+  { page: "scanner" as Page, label: "Legalify", icon: Shield },
+  { page: "chat" as Page, label: "Lexa AI", icon: MessageCircle },
+  { page: "finance" as Page, label: "Snap Cash", icon: DollarSign },
+  { page: "market" as Page, label: "Market Gate", icon: BarChart2 },
+
 ];
 
-const LEVEL_LABELS: Record<string, string> = {
-  STARTER: "⭐ Starter",
-  GROWING: "🌱 Growing",
-  ESTABLISHED: "🏢 Established",
-  PRO: "🏆 Pro",
-  ENTERPRISE: "💎 Enterprise",
-};
-
 export const Sidebar: React.FC<SidebarProps> = ({
-  user,
   currentPage,
   onNavigate,
   isOpen,
