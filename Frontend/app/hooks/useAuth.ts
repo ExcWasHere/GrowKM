@@ -1,34 +1,22 @@
 import { useEffect, useState } from "react";
-import { apiFetch } from "../lib/api";
+import { supabase } from "../lib/supabase";
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] =
-    useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token =
-          localStorage.getItem(
-            "access_token"
-          );
+        const { data: { session } } = await supabase.auth.getSession();
 
-        if (!token) {
-          setIsAuthenticated(false);
-          setLoading(false);
-          return;
-        }
-
-        const res = await apiFetch("/api/me");
-
-        if (!res.ok) {
-          localStorage.clear();
-          setIsAuthenticated(false);
-        } else {
+        if (session) {
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
-      } catch {
+      } catch (error) {
+        console.error("Auth check error:", error);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
@@ -36,6 +24,16 @@ export const useAuth = () => {
     };
 
     checkAuth();
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {

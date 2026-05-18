@@ -1,114 +1,136 @@
+import { ArrowRight, ChevronRight, CheckCircle2 } from "lucide-react";
+
 export default function IndexHero() {
   return (
-    <div className="relative w-full overflow-hidden">
-      {/* MOBILE VIEW */}
-      <section className="lg:hidden pt-28 pb-20 px-6 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold leading-tight tracking-tight">
-          <span className="text-gray-900">Hai Kenalin!</span>
-          <br />
-          <span className="text-gray-900">Aku </span>
-          <span className="inline-block font-bold growkmText">GrowKM</span>
-        </h1>
+    <div className="relative w-full overflow-hidden bg-white">
+      {/* Subtle top wash */}
+      <div className="absolute top-0 inset-x-0 h-[480px] bg-gradient-to-b from-gray-50 to-transparent pointer-events-none" />
 
-        <p className="mt-6 text-xl leading-relaxed italic text-gray-700">
-          Platform UMKM Digital
-          <br />
-          Untuk Bantu Grow-in Bisnis Kamu!
-        </p>
+      {/* ── MOBILE ── */}
+      <section className="lg:hidden relative pt-24 pb-14 px-5">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold leading-snug tracking-tight text-gray-900 mb-4">
+            Urus legalitas usaha{" "}
+            <span className="text-orange-500">
+              tanpa bingung,
+            </span>{" "}
+            tanpa bolak-balik cari informasi
+          </h1>
 
-        <div className="mt-10 flex justify-center">
-          <button className="px-10 py-5 bg-linear-to-r from-amber-400 to-amber-400 text-white font-bold rounded-full shadow-lg active:scale-95 transition">
-            Kepoin GrowKM Yuk!
-          </button>
+          <p className="text-gray-500 text-base leading-relaxed max-w-sm mx-auto">
+            Isi profil usaha, dapat rekomendasi KBLI, ikuti roadmap perizinan
+            langkah demi langkah, dan temukan peluang bisnis nyata setelah izin
+            selesai.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <button className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-sm active:scale-95 transition-all duration-200">
+              Cek Legalitas Usaha
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:border-gray-300 transition-all duration-200">
+              Lihat Cara Kerja
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-gray-400">
+            {[
+              "Gratis, tidak perlu kartu kredit",
+              "Panduan dari regulasi resmi",
+              "Cocok untuk usaha rumahan",
+            ].map((item) => (
+              <span key={item} className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-14 flex justify-center">
-          <img
-            src="/favicon.ico"
-            alt="Ilustrasi Utama GrowKM"
-            className="w-full max-w-sm object-contain"
-          />
-        </div>
+        {/* Dashboard screenshot */}
+        <DashboardFrame />
       </section>
 
-      {/* DESKTOP VIEW */}
-      <section
-        className="hidden lg:block pt-32 pb-16"
-        style={{ minHeight: "90vh" }}
-      >
-        <div className="relative max-w-360 mx-auto px-8 md:px-16 lg:px-24 xl:px-32 h-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center min-h-[70vh]">
-            {/* TEXT */}
-            <div className="flex flex-col justify-center space-y-8">
-              <h1 className="text-7xl font-bold leading-tight tracking-tight">
-                <span className="text-gray-900">Hai Kenalin!</span>
-                <br />
-                <span className="text-gray-900">Aku </span>
-                <span className="inline-block font-bold growkmText">
-                  GrowKM
-                </span>
+      {/* ── DESKTOP ── */}
+      <section className="hidden lg:block relative pt-28 pb-14">
+        <div className="max-w-7xl mx-auto px-8 xl:px-16">
+          <div className="grid lg:grid-cols-2 gap-10 xl:gap-14 items-center min-h-[60vh]">
+            {/* Left: copy */}
+            <div className="flex flex-col justify-center space-y-6">
+              <h1 className="text-4xl xl:text-5xl font-bold leading-snug tracking-tight text-gray-900">
+                Urus legalitas usaha{" "}
+                <span className="text-orange-500">
+                  tanpa bingung,
+                </span>{" "}
+                tanpa bolak-balik cari informasi
               </h1>
 
-              <p className="text-gray-700 text-2xl leading-relaxed max-w-lg font-light italic">
-                Platform UMKM Digital
-                <br />
-                Untuk Bantu Grow-in Bisnis Kamu!
+              <p className="text-gray-500 text-lg leading-relaxed max-w-lg">
+                Isi profil usaha, dapat rekomendasi KBLI, ikuti roadmap
+                perizinan langkah demi langkah, dan temukan peluang bisnis
+                nyata setelah izin selesai.
               </p>
 
-              <div>
-                <button className="px-12 py-5 bg-linear-to-r from-amber-400 to-amber-400 text-white font-bold rounded-full shadow-lg hover:shadow-amber-200/50 transform hover:scale-105 transition-all duration-300">
-                  Kepoin GrowKM Yuk!
+              <div className="flex flex-wrap gap-3">
+                <button className="flex items-center gap-2 px-7 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all duration-200">
+                  Cek Legalitas Usaha
+                  <ArrowRight className="w-4 h-4" />
                 </button>
+                <button className="flex items-center gap-2 px-7 py-3.5 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+                  Lihat Cara Kerja
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-5 text-sm text-gray-400 pt-1">
+                {[
+                  "Gratis, tidak perlu kartu kredit",
+                  "Panduan dari regulasi resmi",
+                  "Cocok untuk usaha rumahan",
+                ].map((item) => (
+                  <span key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                    {item}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* IMAGE */}
-            <div className="relative flex items-center justify-center">
-              <div className="relative w-full max-w-xl">
-                <div className="relative p-10 rounded-3xl overflow-hidden">
-                  <img
-                    src="/banner1.png"
-                    alt="Ilustrasi Utama GrowKM"
-                    className="w-full h-auto object-contain transform hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-orange-100 rounded-full blur-2xl opacity-60 -z-10"></div>
-              </div>
+            {/* Right: dashboard screenshot */}
+            <div className="flex items-center justify-end">
+              <DashboardFrame />
             </div>
           </div>
         </div>
       </section>
+    </div>
+  );
+}
 
-      {/* STYLE */}
-      <style>{`
-  .growkmText {
-    opacity: 0;
-    background-image: linear-gradient(
-      to right,
-      #F59E0B,
-      #EA580C,
-      #EF9F27,
-      #F59E0B
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: fadeIn 1.8s ease-out forwards,
-      gradientFlowContinuous 3s linear 1.8s infinite;
-  }
+function DashboardFrame() {
+  return (
+    <div className="relative w-full max-w-xl mx-auto">
+      {/* Browser chrome wrapper */}
+      <div className="relative rounded-xl overflow-hidden shadow-xl border border-gray-200">
+        {/* Chrome top bar */}
+        <div className="bg-gray-100 px-4 py-2.5 flex items-center gap-2 border-b border-gray-200">
+          <span className="w-3 h-3 rounded-full bg-gray-300" />
+          <span className="w-3 h-3 rounded-full bg-gray-300" />
+          <span className="w-3 h-3 rounded-full bg-gray-300" />
+          <div className="ml-3 flex-1 bg-white rounded-md px-3 py-1 text-xs text-gray-400">
+            growkm.pages.dev/dashboard
+          </div>
+        </div>
 
-  @keyframes fadeIn {
-    0% { opacity: 0; background-position: 0% center; }
-    100% { opacity: 1; background-position: 100% center; }
-  }
-
-  @keyframes gradientFlowContinuous {
-    0% { background-position: 0% center; }
-    100% { background-position: 200% center; }
-  }
-`}</style>
+        {/* Dashboard screenshot */}
+        <img
+          src="/growkm-dashboard.png"
+          alt="Tampilan dashboard GrowKM"
+          className="w-full h-auto block"
+          loading="eager"
+        />
+      </div>
     </div>
   );
 }

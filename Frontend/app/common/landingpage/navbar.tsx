@@ -41,14 +41,14 @@ const Navbar: React.FC<HeaderProps> = () => {
             className={`py-3 px-4 rounded-lg transition-all duration-300 block transform hover:scale-105 relative overflow-hidden
               ${
                 activeItem === item
-                  ? "text-amber-500 font-bold"
-                  : "hover:text-amber-600"
+                  ? "text-amber-600 font-bold"
+                  : "text-gray-700 hover:text-amber-600"
               }`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <span className="relative z-10">{item}</span>
             <div
-              className={`absolute bottom-0 left-0 w-full h-0.5 bg-linear-to-r from-amber-400 to-amber-600 transition-transform duration-300
+              className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 transition-transform duration-300
                 ${
                   activeItem === item
                     ? "scale-x-100"
@@ -74,8 +74,8 @@ const Navbar: React.FC<HeaderProps> = () => {
             className={`block py-4 px-5 rounded-xl text-center transition-all duration-300 font-semibold
               ${
                 activeItem === item
-                  ? "bg-linear-to-r from-amber-100 to-amber-200 text-amber-700 shadow-lg"
-                  : "hover:bg-linear-to-r hover:from-amber-100 hover:to-amber-200 hover:text-amber-600 hover:shadow-md"
+                  ? "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 shadow-lg"
+                  : "text-gray-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-amber-100 hover:text-amber-600 hover:shadow-md"
               }`}
             onClick={() => {
               setActiveItem(item);
@@ -92,24 +92,26 @@ const Navbar: React.FC<HeaderProps> = () => {
   return (
     <>
       {/* Background decoration */}
-      <div className="fixed top-0 left-0 w-full h-32 bg-linear-to-br from-aqua-100/40 via-amber-200/30 to-amber-200/30 -z-10" />
+      <div className="fixed top-0 left-0 w-full h-32 bg-gradient-to-br from-amber-50/40 via-amber-100/30 to-orange-50/30 -z-10" />
 
       {/* Navbar */}
       <div
-        className={`fixed top-0 left-0 z-50 w-full h-16 md:h-20 flex justify-between items-center px-4 md:px-10 transition-all duration-500 backdrop-blur-md border-b border-amber-100/60
+        className={`fixed top-0 left-0 z-50 w-full h-16 md:h-20 flex justify-between items-center px-4 md:px-10 transition-all duration-500 backdrop-blur-md border-b
           ${
             isScrolled || isMobileMenuOpen
-              ? "bg-white shadow-xl"
-              : "bg-transparent shadow-lg"
+              ? "bg-white/95 shadow-xl border-amber-100/60"
+              : "bg-white/80 shadow-lg border-amber-100/40"
           }`}
       >
         {/* Logo */}
-        <h1 className="invisible md:visible text-xl md:text-2xl font-bold transition-all duration-300 hover:scale-105 bg-linear-to-r from-amber-600 to-amber-600 bg-clip-text text-transparent">
-          Grow
-          <span className="bg-linear-to-r from-amber-400 to-amber-500 bg-clip-text text-transparent">
-            KM
-          </span>
-        </h1>
+        <Link to="/" className="flex items-center">
+          <h1 className="text-xl md:text-2xl font-bold transition-all duration-300 hover:scale-105 bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+            Grow
+            <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+              KM
+            </span>
+          </h1>
+        </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:block">
@@ -119,22 +121,24 @@ const Navbar: React.FC<HeaderProps> = () => {
         </nav>
 
         {/* Mobile Button */}
-        <button
-          className="md:hidden text-2xl p-3 rounded-full bg-linear-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 transform hover:scale-110 shadow-lg"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? (
-            <X className="text-amber-600 rotate-90 transition-transform duration-300" />
-          ) : (
-            <Menu className="text-amber-600 transition-transform duration-300" />
-          )}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <button
+            className="text-2xl p-3 rounded-full bg-gradient-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 transform hover:scale-110 shadow-md"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="text-amber-600 rotate-90 transition-transform duration-300" />
+            ) : (
+              <Menu className="text-amber-600 transition-transform duration-300" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Overlay */}
       <button
-        className={`fixed inset-0 bg-linear-to-br from-amber-900/20 via-amber-900/10 to-amber-900/20 backdrop-blur-sm z-40 transition-all duration-500 ${
+        className={`fixed inset-0 bg-gradient-to-br from-amber-900/20 via-amber-900/10 to-amber-900/20 backdrop-blur-sm z-40 transition-all duration-500 ${
           isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -150,16 +154,16 @@ const Navbar: React.FC<HeaderProps> = () => {
               : "translate-x-full scale-95"
           }`}
       >
-        <div className="p-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold bg-linear-to-r from-amber-600 to-amber-600 bg-clip-text text-transparent">
+        <div className="p-6 flex justify-between items-center border-b border-amber-100">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
             Grow
-            <span className="bg-linear-to-r from-amber-400 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
               KM
             </span>
           </h1>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-full hover:scale-110 transition-transform shadow-md"
+            className="p-2 rounded-full hover:bg-amber-100 hover:scale-110 transition-all"
           >
             <X className="text-amber-600" />
           </button>
