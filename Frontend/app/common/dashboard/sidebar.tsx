@@ -25,7 +25,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { page: "dashboard" as Page, label: "Home", icon: Home },
   { page: "roadmap" as Page, label: "Guide to Grow", icon: Map },
-  { page: "scanner" as Page, label: "Legalify", icon: Shield },
+  { page: "scanner" as Page, label: "KBLI Matcher", icon: Shield },
   { page: "chat" as Page, label: "Lexa AI", icon: MessageCircle },
   { page: "finance" as Page, label: "Snap Cash", icon: DollarSign },
   { page: "market" as Page, label: "Market Gate", icon: BarChart2 },
