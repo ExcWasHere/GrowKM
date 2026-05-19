@@ -11,6 +11,7 @@ import {
   BarChart2,
 } from "lucide-react";
 import type { Page, UserProfile } from "../../components/Dashboard/types";
+import { supabase } from "../../lib/supabase";
 
 interface SidebarProps {
   user: UserProfile;
@@ -30,6 +31,22 @@ const NAV_ITEMS = [
   { page: "market" as Page, label: "Market Gate", icon: BarChart2 },
 
 ];
+
+const handleLogout = async () => {
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.error("Sign out error:", err);
+  } finally {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("business_profile");
+    }
+    window.location.href = "/";
+  }
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPage,
@@ -110,9 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Logout */}
       <div className="pt-4 border-t border-amber-100 space-y-1">
         <button
-          onClick={() => {
-            window.location.href = "/";
-          }}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition-all text-red-500 hover:bg-red-50"
         >
           <LogOut size={18} /> Keluar
@@ -203,9 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <div className="pt-4 border-t border-amber-100">
               <button
-                onClick={() => {
-                  window.location.href = "/";
-                }}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg font-bold text-sm text-red-500 hover:bg-red-50 transition-all"
               >
                 <LogOut size={18} /> Keluar

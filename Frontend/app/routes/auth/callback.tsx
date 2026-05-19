@@ -19,9 +19,9 @@ export default function AuthCallback() {
         // Get the code from URL params (PKCE flow)
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+        const redirectUrl = params.get('redirect') || '/dashboard';
 
         if (code) {
-          // Exchange code for session
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
@@ -33,21 +33,10 @@ export default function AuthCallback() {
 
           if (data.session) {
             console.log("Login successful:", data.session.user);
-
-            // Store user info in localStorage
-            if (typeof window !== "undefined") {
-              localStorage.setItem("user", JSON.stringify({
-                name: data.session.user.user_metadata?.full_name || data.session.user.email,
-                email: data.session.user.email,
-                avatar: data.session.user.user_metadata?.avatar_url,
-              }));
-            }
-
-            // Redirect to dashboard
-            navigate("/dashboard");
+            navigate(redirectUrl);
           }
         } else {
-          // Fallback: check if session already exists (hash-based flow)
+          // Fallback: hash-based flow (implicit grant)
           const { data: { session }, error } = await supabase.auth.getSession();
 
           if (error || !session) {
@@ -58,16 +47,7 @@ export default function AuthCallback() {
 
           if (session) {
             console.log("Login successful:", session.user);
-
-            if (typeof window !== "undefined") {
-              localStorage.setItem("user", JSON.stringify({
-                name: session.user.user_metadata?.full_name || session.user.email,
-                email: session.user.email,
-                avatar: session.user.user_metadata?.avatar_url,
-              }));
-            }
-
-            navigate("/dashboard");
+            navigate(redirectUrl);
           }
         }
       } catch (err) {

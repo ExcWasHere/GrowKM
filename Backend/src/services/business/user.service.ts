@@ -38,24 +38,6 @@ export const saveBusinessProfile = async (
 ): Promise<UpsertBusinessProfileResponse> => {
     const businessProfile = await userRepository.upsertBusinessProfile(supabase, userId, input);
 
-    let kbliResult = null;
-
-    if (input.description) {
-        try {
-            if (input.kbli_code) {
-                // Condition B: user already has a kbli_code — it's already saved via upsert above.
-                // Run AI with existingKbliCode so it can detect and return a mismatch_alert if needed.
-                kbliResult = await matchKBLI(supabase, env, input.description, businessProfile.business_type, input.kbli_code);
-            } else {
-                // Condition A: user doesn't know their KBLI — AI recommends only, do NOT save yet.
-                // Frontend shows the recommendation; user confirms via PATCH /users/business-profile/kbli.
-                kbliResult = await matchKBLI(supabase, env, input.description, businessProfile.business_type);
-            }
-        } catch (err) {
-            console.error('[matchKBLI] failed:', err);
-        }
-    }
-
     const roadmapSteps = generateRoadmap(businessProfile);
     const roadmap = await roadmapRepository.upsertFormalizationSteps(
         supabase,
@@ -68,7 +50,6 @@ export const saveBusinessProfile = async (
         roadmapSteps.map(s => s.step_type),
     );
 
-    // Run matching engine (fire-and-forget — don't block the response)
     const completedSteps = roadmapSteps
         .filter(s => s.status === 'completed')
         .map(s => s.step_type);
@@ -78,12 +59,78 @@ export const saveBusinessProfile = async (
 
     return {
         business_profile: businessProfile,
-        kbli_recommendation: kbliResult,
         roadmap,
     };
 };
 
-// Mapping step_type → has_* flag in business_profiles (same logic as roadmap.service FLAG_MAP)
+export const recommendKBLI = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    env: Partial<EnvBindings>,
+) => {
+    const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
+    if (!businessProfile) throw new AppError(404, 'Business profile not found');
+    if (!businessProfile.description) {
+        throw new AppError(400, 'Business description is required. Please update your business profile first.');
+    }
+    if (businessProfile.kbli_code) {
+        throw new AppError(400, 'KBLI code already exists. Use /validate endpoint instead.');
+    }
+
+    const result = await matchKBLI(supabase, env, businessProfile.description, businessProfile.business_type);
+    return result;
+};
+
+export const validateKBLI = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    env: Partial<EnvBindings>,
+) => {
+    const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
+    if (!businessProfile) throw new AppError(404, 'Business profile not found');
+    if (!businessProfile.description) {
+        throw new AppError(400, 'Business description is required. Please update your business profile first.');
+    }
+    if (!businessProfile.kbli_code) {
+        throw new AppError(400, 'KBLI code not found. Use /recommend endpoint instead.');
+    }
+
+    const result = await matchKBLI(supabase, env, businessProfile.description, businessProfile.business_type, businessProfile.kbli_code);
+    return result;
+};
+
+export const confirmKBLI = async (
+    supabase: SupabaseClient<Database>,
+    userId: string,
+    kbliCode: string,
+    env: Partial<EnvBindings>,
+) => {
+    const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
+    if (!businessProfile) throw new AppError(404, 'Business profile not found');
+
+    // Update kbli_code
+    const updated = await userRepository.updateKbliCode(supabase, userId, kbliCode);
+
+    // Regenerate roadmap
+    const roadmapSteps = generateRoadmap(updated);
+    const roadmap = await roadmapRepository.upsertFormalizationSteps(supabase, updated.id, roadmapSteps);
+    await roadmapRepository.deleteObsoleteSteps(supabase, updated.id, roadmapSteps.map(s => s.step_type));
+
+    // Re-run matching engine
+    const completedSteps = roadmapSteps
+        .filter(s => s.status === 'completed')
+        .map(s => s.step_type);
+    runMatchingAndSave(supabase, userId, updated, completedSteps).catch(err =>
+        console.error('[MatchingEngine] Failed after KBLI confirmation:', err),
+    );
+
+    return {
+        business_profile: updated,
+        roadmap,
+    };
+};
+
+
 const STEP_FLAG_MAP: Partial<Record<StepType, 'has_nib' | 'has_pirt' | 'has_halal' | 'has_bpom' | 'has_merek'>> = {
     nib:     'has_nib',
     spp_irt: 'has_pirt',
@@ -114,7 +161,6 @@ export const updateStepStatus = async (
 
     if (newStatus === 'completed' && flagKey) {
         // Update has_* flag → re-fetch profile → regenerate full roadmap
-        // This ensures next step auto-unlocks and all statuses stay consistent
         await userRepository.updateBusinessProfileFlag(supabase, userId, flagKey, true);
         const updatedProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
         const roadmapSteps = generateRoadmap(updatedProfile!);

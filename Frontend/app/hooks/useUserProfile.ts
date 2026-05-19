@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { UserProfile } from "../components/Dashboard/types";
+import { supabase } from "../lib/supabase";
 
 export interface BusinessProfile {
   business_name: string;
@@ -98,32 +99,42 @@ function saveBusinessProfile(bp: BusinessProfile) {
   } catch {}
 }
 
-function getAuthName(): string {
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return "";
-    const parsed = JSON.parse(raw);
-    return parsed?.name || parsed?.user_metadata?.name || "";
-  } catch {
-    return "";
-  }
-}
-
-function getAuthEmail(): string {
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return "";
-    const parsed = JSON.parse(raw);
-    return parsed?.email || parsed?.user_metadata?.email || "";
-  } catch {
-    return "";
-  }
-}
-
 export function useUserProfile() {
-  const [authName] = useState<string>(getAuthName);
-  const [authEmail] = useState<string>(getAuthEmail);
+  const [authName, setAuthName] = useState<string>("");
+  const [authEmail, setAuthEmail] = useState<string>("");
   const [businessProfile, setBusinessProfileState] = useState<BusinessProfile>(loadBusinessProfile);
+
+  useEffect(() => {
+    const loadAuthFromSupabase = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const meta = session.user.user_metadata || {};
+        setAuthName(meta.full_name || meta.name || session.user.email || "");
+        setAuthEmail(session.user.email || "");
+      } else {
+        setAuthName("");
+        setAuthEmail("");
+      }
+    };
+
+    loadAuthFromSupabase();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const meta = session.user.user_metadata || {};
+        setAuthName(meta.full_name || meta.name || session.user.email || "");
+        setAuthEmail(session.user.email || "");
+      } else {
+        setAuthName("");
+        setAuthEmail("");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const computed = computeLevelAndProgress(businessProfile, authName);
   const userProfile: UserProfile = {
     name: authName || "Pengguna",

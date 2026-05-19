@@ -1,10 +1,14 @@
+import { supabase } from "./supabase";
+
 const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:3000';
 
 export const apiFetch = async (
   endpoint: string,
   options: RequestInit = {}
 ) => {
-  const token = localStorage.getItem("access_token");
+  // Get fresh token from Supabase session (always up-to-date)
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
   const headers = {
     "Content-Type": "application/json",
@@ -18,6 +22,13 @@ export const apiFetch = async (
     ...options,
     headers,
   });
+
+  // Handle 401 Unauthorized - redirect to sign-in
+  if (response.status === 401) {
+    const currentPath = window.location.pathname;
+    window.location.href = `/sign-in?redirect=${encodeURIComponent(currentPath)}`;
+    throw new Error('Unauthorized - redirecting to sign-in');
+  }
 
   return response;
 };

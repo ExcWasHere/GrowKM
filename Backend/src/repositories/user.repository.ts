@@ -77,8 +77,8 @@ export const updateBusinessProfileFlag = async (
     return data;
 };
 
-// Confirm and save KBLI code after user approves the AI recommendation (Condition A)
-export const confirmKbliCode = async (
+// Update KBLI code only
+export const updateKbliCode = async (
     supabase: SupabaseClient<Database>,
     userId: string,
     kbliCode: string,
@@ -90,6 +90,6 @@ export const confirmKbliCode = async (
         .select()
         .single();
 
-    if (error) throw new Error(`Failed to confirm KBLI code: ${error.message}`);
+    if (error) throw new Error(`Failed to update KBLI code: ${error.message}`);
     return data;
 };

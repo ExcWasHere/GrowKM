@@ -18,6 +18,12 @@ export default function AuthPages() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
 
+  // Get redirect URL from query params
+  const getRedirectUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('redirect') || '/dashboard';
+  };
+
   const slides = [
     { src: "/register1.jpg", alt: "Foto 1" },
     { src: "/register2.jpg", alt: "Foto 2" },
@@ -107,10 +113,11 @@ export default function AuthPages() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      const redirectUrl = getRedirectUrl();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectUrl)}`,
         },
       });
 
@@ -146,39 +153,25 @@ export default function AuthPages() {
     }
     setIsLoading(true);
     try {
-      const res = await apiFetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: loginEmail.trim(),
-          password: loginPassword,
-        }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail.trim(),
+        password: loginPassword,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Email atau password salah");
+
+      if (error) {
+        alert(error.message || "Email atau password salah");
         setIsLoading(false);
         return;
       }
-      const token = data?.data?.session?.access_token ?? null;
 
-      const refreshToken = data?.data?.session?.refresh_token ?? null;
-
-      const user = data?.data?.user ?? {
-        name: "",
-        role: "",
-      };
-
-      if (typeof window !== "undefined" && token) {
-        localStorage.setItem("access_token", token);
-
-        if (refreshToken) {
-          localStorage.setItem("refresh_token", refreshToken);
-        }
-
-        localStorage.setItem("user", JSON.stringify(user));
+      if (!data.session) {
+        alert("Login gagal, silakan coba lagi.");
+        setIsLoading(false);
+        return;
       }
-      window.location.href = "/dashboard";
+
+      const redirectUrl = getRedirectUrl();
+      window.location.href = redirectUrl;
     } catch (err) {
       alert("Gagal terhubung ke server!");
       console.error(err);
@@ -211,44 +204,37 @@ export default function AuthPages() {
     }
     setIsLoading(true);
     try {
-      const res = await apiFetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: registerEmail.trim(),
-          password: registerPassword,
-
+      const { data, error } = await supabase.auth.signUp({
+        email: registerEmail.trim(),
+        password: registerPassword,
+        options: {
           data: {
             name: registerName,
+            full_name: registerName,
           },
-        }),
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Registrasi gagal");
+
+      if (error) {
+        alert(error.message || "Registrasi gagal");
         setIsLoading(false);
         return;
       }
-      const token = data?.data?.session?.access_token ?? null;
 
-      const refreshToken = data?.data?.session?.refresh_token ?? null;
-
-      const user = data?.data?.user ?? {
-        name: "",
-        role: "",
-      };
-
-      if (typeof window !== "undefined" && token) {
-        localStorage.setItem("access_token", token);
-
-        if (refreshToken) {
-          localStorage.setItem("refresh_token", refreshToken);
-        }
-
-        localStorage.setItem("user", JSON.stringify(user));
+      if (!data.session) {
+        // Email confirmation required
+        alert("Registrasi berhasil! Silakan cek email Anda untuk konfirmasi. Link konfirmasi akan mengarahkan Anda ke halaman konfirmasi.");
+        setIsLoading(false);
+        // Optionally switch to login tab
+        setCurrentPage("login");
+        return;
       }
+
+      // Auto-confirmed (if email confirmation is disabled)
       alert("Registrasi berhasil!");
-      window.location.href = "/dashboard";
+      const redirectUrl = getRedirectUrl();
+      window.location.href = redirectUrl;
     } catch (err) {
       console.error(err);
       alert("Gagal terhubung ke server.");

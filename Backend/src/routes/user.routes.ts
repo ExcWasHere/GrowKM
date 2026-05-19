@@ -1,6 +1,11 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import * as userController from '../controllers/user.controller';
-import { upsertBusinessProfileSchema } from '../schemas/user.schema';
+import {
+    upsertBusinessProfileSchema,
+    kbliRecommendationResponseSchema,
+    kbliValidationResponseSchema,
+    confirmKbliSchema
+} from '../schemas/user.schema';
 import { z } from '@hono/zod-openapi';
 
 const STEP_TYPES = ['nib', 'spp_irt', 'halal', 'bpom', 'merek', 'sertifikat_standar'] as const;
@@ -27,7 +32,7 @@ const upsertBusinessProfileRoute = createRoute({
     path: '/business-profile',
     tags: ['Users'],
     summary: 'Create/Update Business Profile',
-    description: 'Saves the UMKM business profile. Automatically triggers AI Smart KBLI Matcher if a description is provided.',
+    description: 'Saves the UMKM business profile. Does NOT trigger AI — use /kbli/recommend or /kbli/validate endpoints separately.',
     security: [{ BearerAuth: [] }],
     request: {
         body: {
@@ -40,7 +45,65 @@ const upsertBusinessProfileRoute = createRoute({
     },
     responses: {
         200: {
-            description: 'Business profile saved successfully. Triggers Smart KBLI Matcher if description is provided.',
+            description: 'Business profile saved successfully.',
+        },
+    },
+});
+
+const recommendKBLIRoute = createRoute({
+    method: 'post',
+    path: '/business-profile/kbli/recommend',
+    tags: ['Users'],
+    summary: 'Get KBLI Recommendation',
+    description: 'AI recommends KBLI code based on business description. Requires business_description to be set and kbli_code to be empty.',
+    security: [{ BearerAuth: [] }],
+    responses: {
+        200: {
+            description: 'KBLI recommendation generated successfully',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        status: z.literal('success'),
+                        message: z.string(),
+                        data: kbliRecommendationResponseSchema,
+                    }),
+                },
+            },
+        },
+        400: {
+            description: 'Business description missing or KBLI already exists',
+        },
+        404: {
+            description: 'Business profile not found',
+        },
+    },
+});
+
+const validateKBLIRoute = createRoute({
+    method: 'post',
+    path: '/business-profile/kbli/validate',
+    tags: ['Users'],
+    summary: 'Validate Existing KBLI',
+    description: 'AI validates whether the existing KBLI code matches the business description. Requires both kbli_code and business_description to be set.',
+    security: [{ BearerAuth: [] }],
+    responses: {
+        200: {
+            description: 'KBLI validation completed successfully',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        status: z.literal('success'),
+                        message: z.string(),
+                        data: kbliValidationResponseSchema,
+                    }),
+                },
+            },
+        },
+        400: {
+            description: 'Business description or KBLI code missing',
+        },
+        404: {
+            description: 'Business profile not found',
         },
     },
 });
@@ -86,15 +149,13 @@ const confirmKbliRoute = createRoute({
     path: '/business-profile/kbli',
     tags: ['Users'],
     summary: 'Confirm KBLI Code',
-    description: 'Saves the specific KBLI code chosen by the user, usually called after reviewing the AI recommendation.',
+    description: 'Saves the KBLI code chosen by the user (after recommendation or manual input). Triggers roadmap regeneration.',
     security: [{ BearerAuth: [] }],
     request: {
         body: {
             content: {
                 'application/json': {
-                    schema: z.object({
-                        kbli_code: z.string().length(5).openapi({ example: '56210' }),
-                    }).openapi('ConfirmKbliInput'),
+                    schema: confirmKbliSchema,
                 },
             },
         },
@@ -109,7 +170,9 @@ const confirmKbliRoute = createRoute({
 // Handlers
 userRoutes.openapi(getMeRoute, userController.handleGetMe);
 userRoutes.openapi(upsertBusinessProfileRoute, userController.handleUpsertBusinessProfile);
+userRoutes.openapi(recommendKBLIRoute, userController.handleRecommendKBLI);
+userRoutes.openapi(validateKBLIRoute, userController.handleValidateKBLI);
+userRoutes.openapi(confirmKbliRoute, userController.handleConfirmKBLI);
 userRoutes.openapi(updateStepStatusRoute, userController.handleUpdateStepStatus as any);
-userRoutes.openapi(confirmKbliRoute, userController.handleConfirmKbli);
 
 export default userRoutes;

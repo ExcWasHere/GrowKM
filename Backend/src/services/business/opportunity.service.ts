@@ -8,9 +8,6 @@ type MatchStatus = Database['public']['Enums']['match_status_enum'];
 type StepType = Database['public']['Enums']['step_type_enum'];
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
 
-// ============================================================
-// MATCHING ENGINE (Deterministic — no AI)
-// ============================================================
 
 interface MatchResult {
     opportunity_id: string;
@@ -19,11 +16,7 @@ interface MatchResult {
     match_score: number;
 }
 
-/**
- * Core matching function.
- * Filters opportunities by profile attributes, then calculates match status
- * based on which required_steps the user has already completed.
- */
+
 export function computeMatches(
     profile: BusinessProfile,
     completedSteps: StepType[],
@@ -83,14 +76,7 @@ export function computeMatches(
     });
 }
 
-// ============================================================
-// SERVICE FUNCTIONS
-// ============================================================
 
-/**
- * Run matching engine and persist results to DB.
- * Returns a summary and the list of newly unlocked opportunity IDs.
- */
 export const runMatchingAndSave = async (
     supabase: SupabaseClient<Database>,
     userId: string,
@@ -140,10 +126,7 @@ export const runMatchingAndSave = async (
     return { eligible, almost, locked, total: results.length, newly_unlocked: newlyUnlocked };
 };
 
-/**
- * Get all opportunities with match status for a user.
- * Optionally filter by match status.
- */
+
 export const getOpportunitiesForUser = async (
     supabase: SupabaseClient<Database>,
     userId: string,
@@ -182,9 +165,7 @@ export const getOpportunitiesForUser = async (
     return { summary, opportunities };
 };
 
-/**
- * Get a single opportunity with match status for a user.
- */
+
 export const getOpportunityDetail = async (
     supabase: SupabaseClient<Database>,
     userId: string,
@@ -205,10 +186,7 @@ export const getOpportunityDetail = async (
     };
 };
 
-/**
- * Get newly unlocked opportunities since a given timestamp.
- * Used for the celebration modal after a step is completed.
- */
+
 export const getNewlyUnlocked = async (
     supabase: SupabaseClient<Database>,
     userId: string,

@@ -25,3 +25,30 @@ export const upsertBusinessProfileSchema = z.object({
 }).openapi('UpsertBusinessProfile');
 
 export type UpsertBusinessProfileInput = z.infer<typeof upsertBusinessProfileSchema>;
+
+// KBLI Recommendation Response Schema
+export const kbliRecommendationResponseSchema = z.object({
+    kbli_code: z.string().openapi({ example: '10791' }),
+    kbli_title: z.string().openapi({ example: 'Industri Makanan Lainnya' }),
+    confidence: z.number().openapi({ example: 0.92 }),
+    explanation: z.string().openapi({ example: 'Berdasarkan deskripsi usaha katering nasi kotak, KBLI 10791 paling sesuai.' })
+}).openapi('KBLIRecommendationResponse');
+
+export type KBLIRecommendationResponse = z.infer<typeof kbliRecommendationResponseSchema>;
+
+// KBLI Validation Response Schema
+export const kbliValidationResponseSchema = z.object({
+    is_valid: z.boolean().openapi({ example: true }),
+    mismatch_alert: z.boolean().openapi({ example: false }),
+    explanation: z.string().openapi({ example: 'KBLI 10791 sudah sesuai dengan deskripsi usaha Anda.' }),
+    suggested_kbli: z.string().optional().openapi({ example: '10791', description: 'Muncul jika mismatch_alert = true' })
+}).openapi('KBLIValidationResponse');
+
+export type KBLIValidationResponse = z.infer<typeof kbliValidationResponseSchema>;
+
+// KBLI Confirm Input Schema
+export const confirmKbliSchema = z.object({
+    kbli_code: z.string().min(5).openapi({ example: '10791' })
+}).openapi('ConfirmKBLI');
+
+export type ConfirmKBLIInput = z.infer<typeof confirmKbliSchema>;

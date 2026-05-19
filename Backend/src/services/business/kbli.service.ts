@@ -23,7 +23,7 @@ export interface KBLIMatchResult {
     kbli_name: string;
     explanation: string;
     warnings: KBLIWarning[];
-    mismatch_alert: KBLIMismatchAlert | null; // non-null only when user provided a kbli_code that differs from AI recommendation
+    mismatch_alert: KBLIMismatchAlert | null; 
 }
 
 function getOpenAIClient(env: Partial<EnvBindings>): OpenAI {

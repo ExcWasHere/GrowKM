@@ -21,7 +21,6 @@ export interface GetMeResponse {
  */
 export interface UpsertBusinessProfileResponse {
     business_profile: BusinessProfileRow;
-    kbli_recommendation: KBLIMatchResult | null;
     roadmap: RoadmapStep[];
 }
 

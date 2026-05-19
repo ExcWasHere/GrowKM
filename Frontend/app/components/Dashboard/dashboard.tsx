@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Menu } from "lucide-react";
 import type { Page } from "./types";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { supabase } from "../../lib/supabase";
 import { Sidebar } from "../../common/dashboard/sidebar";
 import { MobileBottomNav } from "../../common/dashboard/MobileBottomNav";
 import { DashboardPage } from "../../components/Dashboard/pages/DashboardPage";
@@ -21,10 +23,53 @@ const PAGE_TITLES: Record<Page, string> = {
 };
 
 export default function GrowKMDashboard() {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
   const [chatContext, setChatContext] = useState<string | undefined>(undefined);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { userProfile, businessProfile, authEmail, updateBusinessProfile } = useUserProfile();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        const currentPath = window.location.pathname;
+        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+        return;
+      }
+
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        const currentPath = window.location.pathname;
+        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  // Show loading while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-semibold">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleOpenChat = (stepId: string) => {
     setChatContext(stepId);
