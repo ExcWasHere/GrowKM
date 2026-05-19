@@ -32,7 +32,6 @@ interface ProfilePageProps {
   authEmail: string;
   saveState?: "idle" | "loading" | "success" | "error";
   onSave: (updates: Partial<BusinessProfile>) => Promise<void>;
-  /** Called after KBLI confirmed so parent can refresh roadmap data */
   onRoadmapRefresh?: () => void;
 }
 
@@ -60,8 +59,6 @@ const PROVINCES = [
   "Sulawesi Utara","Sulawesi Tengah","Sulawesi Selatan","Sulawesi Tenggara",
   "Maluku","Papua",
 ];
-
-// ─── Draft types ───────────────────────────────────────────────────────────────
 
 interface EditableDraft {
   business_name: string;
@@ -147,8 +144,6 @@ function formatRevenue(val: number): string {
   return `Rp ${val.toLocaleString("id-ID")}`;
 }
 
-// ─── KBLI Confirmation Modal ───────────────────────────────────────────────────
-
 interface KbliModalProps {
   kbliCode: string;
   onConfirm: () => Promise<void>;
@@ -172,7 +167,6 @@ const KbliConfirmModal: React.FC<KbliModalProps> = ({
   };
 
   return (
-    // Backdrop
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl border border-amber-200 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Top accent */}
@@ -239,8 +233,6 @@ const KbliConfirmModal: React.FC<KbliModalProps> = ({
   );
 };
 
-// ─── ProfilePage ───────────────────────────────────────────────────────────────
-
 export const ProfilePage: React.FC<ProfilePageProps> = ({
   user,
   businessProfile,
@@ -250,16 +242,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onRoadmapRefresh,
 }) => {
   const levelCfg = LEVEL_CONFIG[user.level] ?? LEVEL_CONFIG.STARTER;
-
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  // KBLI modal state
   const [pendingKbli, setPendingKbli] = useState<string | null>(null);
   const [kbliConfirmed, setKbliConfirmed] = useState(false);
-
   const [draft, setDraft] = useState<EditableDraft>(() =>
     bpToDraft(businessProfile),
   );
@@ -284,28 +272,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setSaveError(null);
     try {
       await onSave(draftToBp(draft));
-
-      // After saving, check if backend generated a new KBLI code.
-      // The backend auto-runs AI on description → we re-fetch business profile
-      // to pick up the AI-recommended kbli_code.
       const res = await apiFetch("/api/users/me");
       if (res.ok) {
         const freshProfile: BusinessProfile = await res.json();
         const aiKbli = freshProfile.kbli_code;
-
         if (aiKbli && aiKbli !== draft.kbli_code) {
-          // AI gave a new / different KBLI → show confirmation modal
           setPendingKbli(aiKbli);
-          // Update draft so if user skips, the field still shows the AI value
           setDraft((prev) => ({ ...prev, kbli_code: aiKbli }));
         } else {
-          // No new KBLI, just close editing normally
           setIsEditing(false);
           setSaved(true);
           setTimeout(() => setSaved(false), 3000);
         }
       } else {
-        // Fallback: close editing even if re-fetch fails
         setIsEditing(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -325,8 +304,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setSaveError(null);
     setPendingKbli(null);
   };
-
-  /** User confirms the AI-recommended KBLI code */
   const handleKbliConfirm = async () => {
     if (!pendingKbli) return;
     const res = await apiFetch("/api/users/business-profile/kbli", {
@@ -344,12 +321,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setIsEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-
-    // Trigger parent to re-fetch roadmap so unlocked steps appear
     onRoadmapRefresh?.();
   };
 
-  /** User skips KBLI confirmation */
   const handleKbliSkip = () => {
     setPendingKbli(null);
     setIsEditing(false);
@@ -360,7 +334,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const set = (field: keyof EditableDraft, value: string | boolean) =>
     setDraft((prev) => ({ ...prev, [field]: value }));
 
-  // Profile completion
   const completionFields = [
     user.name,
     authEmail,
@@ -404,7 +377,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   return (
     <>
-      {/* ── KBLI Confirmation Modal ── */}
+      {/* KBLI Confirmation Modal */}
       {pendingKbli && (
         <KbliConfirmModal
           kbliCode={pendingKbli}
@@ -414,7 +387,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
-        {/* ── LEFT COLUMN ──────────────────────────────────────────────────── */}
+        {/* LEFT COLUMN */}
         <div className="lg:col-span-4 space-y-4 md:space-y-6">
           {/* Avatar + Level */}
           <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
@@ -523,9 +496,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           </div>
         </div>
 
-        {/* ── RIGHT COLUMN ─────────────────────────────────────────────────── */}
+        {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 space-y-4 md:space-y-6">
-          {/* ✅ Success toast */}
+          {/* Success toast */}
           {saved && (
             <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 shadow-sm">
               <CheckCircle size={18} className="text-green-500 shrink-0" />
@@ -537,7 +510,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             </div>
           )}
 
-          {/* ❌ Error toast */}
+          {/* Error toast */}
           {saveError && (
             <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 shadow-sm">
               <AlertCircle size={18} className="text-red-500 shrink-0" />
@@ -846,8 +819,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     </>
   );
 };
-
-// ─── Sub-components ────────────────────────────────────────────────────────────
 
 const SectionCard: React.FC<{
   title: string;

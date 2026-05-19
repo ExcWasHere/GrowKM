@@ -37,7 +37,6 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
   const meta = CARD_META["roadmap"];
   const completedCount = steps.filter((s) => s.status === "completed").length;
 
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loadState === "idle" || loadState === "loading") {
     return (
       <div className="bg-white rounded-xl p-6 border border-amber-200 shadow-sm flex items-center justify-center gap-3 min-h-[200px]">
@@ -49,7 +48,6 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
   if (loadState === "error") {
     return (
       <div className="bg-white rounded-xl p-6 border border-red-200 shadow-sm flex flex-col items-center justify-center gap-4 min-h-[200px]">
@@ -69,7 +67,6 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
     );
   }
 
-  // ── Empty — roadmap belum digenerate (belum ada KBLI) ─────────────────────
   if (steps.length === 0) {
     return (
       <div className="bg-white rounded-xl p-8 border border-amber-200 shadow-sm flex flex-col items-center justify-center gap-4 min-h-[200px] text-center">
@@ -87,7 +84,6 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
     );
   }
 
-  // ── Main ───────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
       {/* Header card */}
@@ -287,7 +283,7 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
         </div>
       </div>
 
-      {/* Benefit hint — muncul kalau NIB done & SPP-IRT next */}
+      {/* Benefit hint */}
       {steps.find((s) => s.step_type === "nib" && s.status === "completed") &&
         steps.find(
           (s) =>
