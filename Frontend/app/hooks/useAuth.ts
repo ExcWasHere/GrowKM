@@ -24,8 +24,6 @@ export const useAuth = () => {
     };
 
     checkAuth();
-
-    // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
       setLoading(false);
