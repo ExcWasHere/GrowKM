@@ -2,8 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 import { apiFetch } from "../lib/api";
 import type { UserProfile } from "../components/Dashboard/types";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface BusinessProfile {
   business_name: string;
   business_type: UserProfile["businessType"];
@@ -55,9 +53,6 @@ export interface RoadmapStep extends RoadmapStepRaw {
 }
 
 export type ProfileLoadState = "idle" | "loading" | "success" | "error";
-
-// ─── Static UI metadata per step_type ────────────────────────────────────────
-
 const STEP_META: Record<StepType, Omit<RoadmapStep, keyof RoadmapStepRaw>> = {
   nib: {
     label: "NIB (Nomor Induk Berusaha)",
@@ -118,8 +113,6 @@ function enrichStep(raw: RoadmapStepRaw): RoadmapStep {
   return { ...raw, ...meta };
 }
 
-// ─── Defaults ─────────────────────────────────────────────────────────────────
-
 const DEFAULT_BUSINESS: BusinessProfile = {
   business_name: "",
   business_type: "lainnya",
@@ -138,8 +131,6 @@ const DEFAULT_BUSINESS: BusinessProfile = {
   has_merek: false,
   onboarding_completed: false,
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getNameFromLocalStorage(): string {
   try {
@@ -167,8 +158,6 @@ function getEmailFromLocalStorage(): string {
     return "";
   }
 }
-
-// ─── Level & Progress ─────────────────────────────────────────────────────────
 
 function computeLevelAndProgress(
   bp: BusinessProfile,
@@ -203,8 +192,6 @@ function computeLevelAndProgress(
   return { level, progressPercent };
 }
 
-// ─── Response shapes ──────────────────────────────────────────────────────────
-
 interface GetMeResponse {
   status: string;
   message: string;
@@ -229,8 +216,6 @@ interface RoadmapStatusResponse {
   };
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useUserProfile() {
   const [authName, setAuthName]               = useState<string>(getNameFromLocalStorage);
   const [authEmail, setAuthEmail]             = useState<string>(getEmailFromLocalStorage);
@@ -240,8 +225,6 @@ export function useUserProfile() {
   const [loadState, setLoadState]             = useState<ProfileLoadState>("idle");
   const [saveState, setSaveState]             = useState<ProfileLoadState>("idle");
   const [error, setError]                     = useState<string | null>(null);
-
-  // ── Core fetch — used for initial load & refetch ───────────────────────────
   const fetchAll = useCallback(async () => {
     setLoadState("loading");
     setError(null);
@@ -282,10 +265,7 @@ export function useUserProfile() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-
-  // ── Derived user profile ────────────────────────────────────────────────────
   const computed = computeLevelAndProgress(businessProfile, authName);
-
   const userProfile: UserProfile = {
     name:            authName || "Pengguna",
     businessName:    businessProfile.business_name,
@@ -299,12 +279,10 @@ export function useUserProfile() {
     progressPercent: computed.progressPercent,
   };
 
-  // ── Save business profile ───────────────────────────────────────────────────
   const updateBusinessProfile = useCallback(
     async (updates: Partial<BusinessProfile>): Promise<void> => {
       setSaveState("loading");
       setError(null);
-
       const prev = businessProfile;
       const next = { ...prev, ...updates };
       setBusinessProfile(next); // optimistic
@@ -339,7 +317,7 @@ export function useUserProfile() {
 
         setSaveState("success");
       } catch (err) {
-        setBusinessProfile(prev); // revert optimistic update
+        setBusinessProfile(prev);
         const msg = err instanceof Error ? err.message : "Gagal menyimpan profil";
         setError(msg);
         setSaveState("error");
@@ -349,10 +327,6 @@ export function useUserProfile() {
     [businessProfile],
   );
 
-  /**
-   * Update a single roadmap step status via PATCH.
-   * Response already returns all steps + progress so no extra fetch needed.
-   */
   const updateStepStatus = useCallback(
     async (stepType: StepType, status: "in_progress" | "completed") => {
       const res = await apiFetch("/api/users/roadmap/status", {
@@ -375,7 +349,6 @@ export function useUserProfile() {
   );
 
   return {
-    // Profile
     userProfile,
     businessProfile,
     authName,
@@ -384,13 +357,9 @@ export function useUserProfile() {
     saveState,
     error,
     updateBusinessProfile,
-
-    // Roadmap
     roadmapSteps,
     roadmapProgress,
     updateStepStatus,
-
-    // Re-fetch /api/users/me → refreshes profile + roadmap in one call
     refetch: fetchAll,
   };
 }
