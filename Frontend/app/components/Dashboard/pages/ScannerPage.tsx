@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   XCircle,
   Info,
+  RefreshCw,
 } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
 import { CARD_META } from "../../../common/dashboard/featureMeta";
@@ -16,14 +17,37 @@ interface ScannerPageProps {
   user: UserProfile;
 }
 
-interface ScanResult {
-  status: "ok" | "warning";
-  kbli: string;
-  label: string;
-  message: string;
-  suggestions: string[];
+// ─── Types sesuai response backend ───────────────────────────────────────────
+
+interface KbliWarning {
+  wrong_kbli: string;
+  reason: string;
 }
 
+interface KbliMismatchAlert {
+  user_kbli: string;
+  recommended_kbli: string;
+  reason: string;
+}
+
+interface RecommendResult {
+  mode: "recommend";
+  kbli_code: string;
+  kbli_title: string;
+  confidence: number;
+  explanation: string;
+}
+
+interface ValidateResult {
+  mode: "validate";
+  kbli_code: string;
+  kbli_name: string;
+  explanation: string;
+  warnings: KbliWarning[];
+  mismatch_alert: KbliMismatchAlert | null;
+}
+
+type ScanResult = RecommendResult | ValidateResult;
 type ConfirmState = "idle" | "loading" | "success" | "error";
 
 const KBLI_EXAMPLES = [
@@ -47,102 +71,80 @@ const KBLI_EXAMPLES = [
   },
 ];
 
-const SYSTEM_PROMPT = `Kamu adalah konsultan KBLI (Klasifikasi Baku Lapangan Usaha Indonesia) yang ahli untuk UMKM Indonesia.
-
-Tugasmu: Analisis deskripsi usaha dari pengguna dan rekomendasikan kode KBLI yang paling tepat.
-
-Aturan penting:
-- Kode KBLI selalu 5 digit angka
-- Deteksi potensi mismatch atau ketidaksesuaian izin
-- Berikan saran konkret dan actionable
-- Gunakan bahasa Indonesia yang ramah dan mudah dipahami
-
-Kamu HARUS merespons HANYA dengan JSON valid (tanpa markdown, tanpa backtick), dengan format ini:
-{
-  "status": "ok" | "warning",
-  "kbli": "<5-digit kode>",
-  "label": "<nama KBLI>",
-  "message": "<penjelasan singkat mengapa KBLI ini cocok, dan potensi masalah jika ada>",
-  "suggestions": ["<saran 1>", "<saran 2>", "<saran 3>"]
-}
-
-Gunakan "warning" jika ada potensi mismatch izin atau ambiguitas. Gunakan "ok" jika sudah jelas sesuai.`;
-
 export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
-  const [desc, setDesc] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>("idle");
 
   const meta = CARD_META["scanner"];
+  const hasKbli = Boolean(user.business_profile?.kbli_code?.trim());
+
+  // ─── Run scan ──────────────────────────────────────────────────────────────
 
   const runScan = async () => {
-    if (!desc.trim()) return;
-
     setLoading(true);
     setResult(null);
     setError(null);
     setConfirmState("idle");
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [
-            {
-              role: "user",
-              content: `Tolong analisis usaha berikut dan rekomendasikan KBLI yang tepat:\n\n"${desc}"`,
-            },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status}`);
+      if (hasKbli) {
+        const response = await apiFetch(
+          "/api/users/business-profile/kbli/validate",
+          { method: "POST" }
+        );
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.message || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        setResult({
+          mode: "validate",
+          kbli_code: data.data.kbli_code,
+          kbli_name: data.data.kbli_name,
+          explanation: data.data.explanation,
+          warnings: data.data.warnings ?? [],
+          // mismatch_alert bisa null kalau sudah sesuai
+          mismatch_alert: data.data.mismatch_alert ?? null,
+        });
+      } else {
+        const response = await apiFetch(
+          "/api/users/business-profile/kbli/recommend",
+          { method: "POST" }
+        );
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.message || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        setResult({
+          mode: "recommend",
+          kbli_code: data.data.kbli_code,
+          kbli_title: data.data.kbli_title,
+          confidence: data.data.confidence,
+          explanation: data.data.explanation,
+        });
       }
-
-      const data = await response.json();
-      const rawText = data.content
-        ?.map((block: { type: string; text?: string }) =>
-          block.type === "text" ? block.text : ""
-        )
-        .join("")
-        .trim();
-
-      const parsed: ScanResult = JSON.parse(rawText);
-      setResult(parsed);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Scan error:", err);
-      setError(
-        "Gagal menganalisis usahamu. Coba lagi dalam beberapa saat ya!"
-      );
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan.";
+      setError(`Gagal menganalisis usahamu: ${message}. Coba lagi ya!`);
     } finally {
       setLoading(false);
     }
   };
 
-  const confirmKbli = async () => {
-    if (!result) return;
+  // ─── Confirm KBLI ──────────────────────────────────────────────────────────
 
+  const confirmKbli = async (kbliCode: string) => {
     setConfirmState("loading");
-
     try {
       const response = await apiFetch("/api/users/business-profile/kbli", {
         method: "PATCH",
-        body: JSON.stringify({ kbli_code: result.kbli }),
+        body: JSON.stringify({ kbli_code: kbliCode }),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       setConfirmState("success");
     } catch (err) {
       console.error("Confirm KBLI error:", err);
@@ -150,7 +152,152 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
     }
   };
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // ─── Render helpers ────────────────────────────────────────────────────────
+
+  const renderConfirmSection = (kbliCode: string) => {
+    if (confirmState === "success") {
+      return (
+        <div className="flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-3 mt-3">
+          <ShieldCheck size={18} className="text-green-600 shrink-0" />
+          <p className="text-green-700 text-sm font-semibold">
+            KBLI <span className="font-black">{kbliCode}</span> berhasil dikonfirmasi & disimpan!
+          </p>
+        </div>
+      );
+    }
+    if (confirmState === "error") {
+      return (
+        <div className="space-y-2 mt-3">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <XCircle size={18} className="text-red-500 shrink-0" />
+            <p className="text-red-700 text-sm">Gagal menyimpan KBLI. Coba lagi ya!</p>
+          </div>
+          <button
+            onClick={() => confirmKbli(kbliCode)}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+          >
+            <RefreshCw size={18} /> Coba Lagi
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-2 mt-3">
+        <div className="flex items-start gap-2 bg-white/60 border border-amber-200 rounded-xl px-4 py-3">
+          <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-gray-600 text-xs leading-relaxed">
+            Pastikan KBLI ini sudah sesuai sebelum dikonfirmasi. KBLI yang dipilih akan tersimpan di profil bisnismu.
+          </p>
+        </div>
+        <button
+          onClick={() => confirmKbli(kbliCode)}
+          disabled={confirmState === "loading"}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-green-500/30 transition-all disabled:opacity-50"
+        >
+          {confirmState === "loading" ? (
+            <Loader size={18} className="animate-spin" />
+          ) : (
+            <ShieldCheck size={18} />
+          )}
+          {confirmState === "loading" ? "Menyimpan..." : `Konfirmasi KBLI ${kbliCode}`}
+        </button>
+      </div>
+    );
+  };
+
+  const renderRecommendResult = (r: RecommendResult) => (
+    <div className="bg-green-50 border border-green-200 rounded-xl p-4 md:p-5 shadow-sm space-y-4">
+      <div className="flex items-start gap-3">
+        <CheckCircle size={22} className="text-green-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-black text-gray-800">{r.kbli_code}</span>
+            <span className="text-gray-400 text-sm">—</span>
+            <span className="text-gray-700 font-semibold text-sm">{r.kbli_title}</span>
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-gray-500">Confidence:</span>
+            <span className="text-xs font-bold text-green-600">
+              {Math.round(r.confidence * 100)}%
+            </span>
+          </div>
+          <p className="text-gray-600 text-sm leading-relaxed">{r.explanation}</p>
+        </div>
+      </div>
+      {renderConfirmSection(r.kbli_code)}
+    </div>
+  );
+
+  const renderValidateResult = (r: ValidateResult) => {
+    const hasMismatch = !!r.mismatch_alert;
+
+    return (
+      <div className={`rounded-xl p-4 md:p-5 border shadow-sm space-y-4 ${
+        hasMismatch ? "bg-orange-50 border-orange-200" : "bg-green-50 border-green-200"
+      }`}>
+        {/* Status header */}
+        <div className="flex items-start gap-3">
+          {hasMismatch ? (
+            <AlertTriangle size={22} className="text-orange-500 shrink-0 mt-0.5" />
+          ) : (
+            <CheckCircle size={22} className="text-green-500 shrink-0 mt-0.5" />
+          )}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-black text-gray-800">{r.kbli_code}</span>
+              <span className="text-gray-400 text-sm">—</span>
+              <span className="text-gray-700 font-semibold text-sm">{r.kbli_name}</span>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed">{r.explanation}</p>
+          </div>
+        </div>
+
+        {/* Mismatch alert */}
+        {hasMismatch && r.mismatch_alert && (
+          <div className="bg-white/70 border border-orange-200 rounded-xl p-3.5 space-y-1">
+            <p className="text-xs font-bold text-orange-700 uppercase tracking-wider">KBLI tidak sesuai</p>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-black text-gray-500 line-through">{r.mismatch_alert.user_kbli}</span>
+              <span className="text-gray-400">→</span>
+              <span className="font-black text-orange-600">{r.mismatch_alert.recommended_kbli}</span>
+            </div>
+            <p className="text-gray-600 text-xs leading-relaxed">{r.mismatch_alert.reason}</p>
+            {renderConfirmSection(r.mismatch_alert.recommended_kbli)}
+          </div>
+        )}
+
+        {/* Valid state */}
+        {!hasMismatch && (
+          <div className="flex items-center gap-2 bg-green-100 border border-green-200 rounded-xl px-4 py-3">
+            <ShieldCheck size={18} className="text-green-600 shrink-0" />
+            <p className="text-green-700 text-sm font-semibold">
+              KBLI <span className="font-black">{user.business_profile?.kbli_code}</span> sudah valid untuk usahamu.
+            </p>
+          </div>
+        )}
+
+        {/* Warnings */}
+        {r.warnings.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-black text-gray-500 uppercase tracking-wider">
+              KBLI yang sering tertukar:
+            </p>
+            {r.warnings.map((w, i) => (
+              <div key={i} className="flex items-start gap-2.5 bg-white/60 border border-gray-200 rounded-xl px-3.5 py-3">
+                <XCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-black text-gray-700 text-xs">{w.wrong_kbli}</span>
+                  <p className="text-gray-500 text-xs leading-relaxed mt-0.5">{w.reason}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── Main Render ───────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-5">
@@ -161,49 +308,64 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
             className={`w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg`}
           >
             {React.cloneElement(
-              meta.icon as React.ReactElement<{
-                size?: number;
-                className?: string;
-              }>,
+              meta.icon as React.ReactElement<{ size?: number; className?: string }>,
               { size: 36, className: "text-white" }
             )}
           </div>
           <div>
             <h2 className="font-bold text-gray-800 text-xl">KBLI Matcher</h2>
             <p className="text-gray-500 text-sm">
-              Deteksi KBLI yang tepat & cek kepatuhan izin usahamu
+              {hasKbli
+                ? "Validasi kesesuaian KBLI dengan deskripsi usahamu"
+                : "Deteksi KBLI yang tepat berdasarkan deskripsi usahamu"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Input */}
-      <div className="bg-white border border-amber-200 rounded-xl p-4 md:p-5 shadow-sm">
-        <label className="text-gray-700 text-sm font-bold mb-3 block">
-          Deskripsikan usahamu secara spesifik:
-        </label>
-        <textarea
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          placeholder={`Contoh: "Saya buka usaha nasi kotak dari dapur rumah, jual ke kantor dan acara. Juga jual jus buah dalam botol kemasan."`}
-          rows={4}
-          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-amber-400 transition-colors resize-none"
-        />
-        <button
-          onClick={runScan}
-          disabled={!desc.trim() || loading}
-          className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-40"
-        >
-          {loading ? (
-            <Loader size={18} className="animate-spin" />
+      {/* Context info */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+        <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
+        <div className="text-sm text-gray-700 space-y-0.5">
+          {hasKbli ? (
+            <>
+              <p>
+                KBLI saat ini:{" "}
+                <span className="font-black text-amber-700">
+                  {user.business_profile?.kbli_code}
+                </span>
+              </p>
+              <p className="text-gray-500 text-xs">
+                AI akan memvalidasi apakah KBLI ini sesuai dengan deskripsi usahamu.
+              </p>
+            </>
           ) : (
-            <Search size={18} />
+            <>
+              <p className="font-semibold">Belum ada KBLI yang tersimpan.</p>
+              <p className="text-gray-500 text-xs">
+                AI akan merekomendasikan KBLI berdasarkan deskripsi usahamu:{" "}
+                <span className="italic">
+                  "{user.business_profile?.description || "—"}"
+                </span>
+              </p>
+            </>
           )}
-          {loading ? "Menganalisis..." : "Scan KBLI"}
-        </button>
+        </div>
       </div>
 
-      {/* Error state */}
+      {/* Scan Button */}
+      <button
+        onClick={runScan}
+        disabled={loading}
+        className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-40"
+      >
+        {loading ? <Loader size={18} className="animate-spin" /> : <Search size={18} />}
+        {loading
+          ? hasKbli ? "Memvalidasi KBLI..." : "Menganalisis usahamu..."
+          : hasKbli ? "Validasi KBLI Saya" : "Rekomendasikan KBLI"}
+      </button>
+
+      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
           <XCircle size={20} className="text-red-500 shrink-0 mt-0.5" />
@@ -213,97 +375,9 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
 
       {/* Result */}
       {result && (
-        <div
-          className={`rounded-xl p-4 md:p-5 border shadow-sm ${
-            result.status === "ok"
-              ? "bg-green-50 border-green-200"
-              : "bg-orange-50 border-orange-200"
-          }`}
-        >
-          {/* Result header */}
-          <div className="flex items-start gap-3 mb-4">
-            {result.status === "ok" ? (
-              <CheckCircle size={22} className="text-green-500 shrink-0 mt-0.5" />
-            ) : (
-              <AlertTriangle size={22} className="text-orange-500 shrink-0 mt-0.5" />
-            )}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-black text-gray-800">{result.kbli}</span>
-                <span className="text-gray-400 text-sm">—</span>
-                <span className="text-gray-700 font-semibold text-sm">
-                  {result.label}
-                </span>
-              </div>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {result.message}
-              </p>
-            </div>
-          </div>
-
-          {/* Suggestions */}
-          <div className="space-y-2 mb-5">
-            <p className="text-gray-500 text-xs font-black uppercase tracking-wider">
-              Rekomendasi:
-            </p>
-            {result.suggestions.map((s, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <span className="text-amber-500 shrink-0 mt-0.5">→</span>
-                {s}
-              </div>
-            ))}
-          </div>
-
-          {/* Confirm section */}
-          {confirmState === "success" ? (
-            <div className="flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-3">
-              <ShieldCheck size={18} className="text-green-600 shrink-0" />
-              <p className="text-green-700 text-sm font-semibold">
-                KBLI <span className="font-black">{result.kbli}</span> berhasil dikonfirmasi & disimpan!
-              </p>
-            </div>
-          ) : confirmState === "error" ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <XCircle size={18} className="text-red-500 shrink-0" />
-                <p className="text-red-700 text-sm">
-                  Gagal menyimpan KBLI. Coba lagi ya!
-                </p>
-              </div>
-              <button
-                onClick={confirmKbli}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
-              >
-                <ShieldCheck size={18} />
-                Coba Lagi
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex items-start gap-2 bg-white/60 border border-amber-200 rounded-xl px-4 py-3">
-                <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-gray-600 text-xs leading-relaxed">
-                  Pastikan KBLI ini sudah sesuai dengan usahamu sebelum dikonfirmasi.
-                  KBLI yang dipilih akan tersimpan di profil bisnismu.
-                </p>
-              </div>
-              <button
-                onClick={confirmKbli}
-                disabled={confirmState === "loading"}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-green-500/30 transition-all disabled:opacity-50"
-              >
-                {confirmState === "loading" ? (
-                  <Loader size={18} className="animate-spin" />
-                ) : (
-                  <ShieldCheck size={18} />
-                )}
-                {confirmState === "loading"
-                  ? "Menyimpan..."
-                  : `Konfirmasi KBLI ${result.kbli}`}
-              </button>
-            </div>
-          )}
-        </div>
+        result.mode === "recommend"
+          ? renderRecommendResult(result)
+          : renderValidateResult(result)
       )}
 
       {/* KBLI Reference */}
