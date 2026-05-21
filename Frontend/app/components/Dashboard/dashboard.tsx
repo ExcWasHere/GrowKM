@@ -128,6 +128,7 @@ export default function GrowKMDashboard() {
             authEmail={authEmail}
             onSave={updateBusinessProfile}
             onRoadmapRefresh={refetch}
+            roadmapProgress={roadmapProgress}
           />
         );
     }

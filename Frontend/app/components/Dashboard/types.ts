@@ -1,5 +1,3 @@
-// ─── Business Profile ────────────────────────────────────────────────────────
-
 export type BusinessType =
   | "kuliner"
   | "fashion_craft"
@@ -31,6 +29,11 @@ export interface BusinessProfile {
   has_halal: boolean;
   has_bpom: boolean;
   has_merek: boolean;
+  nib_image?: string;
+  pirt_image?: string;
+  halal_image?: string;
+  bpom_image?: string;
+  merek_image?: string;
   level: BusinessLevel;
   score: number;
   streak_days: number;
@@ -38,8 +41,6 @@ export interface BusinessProfile {
   created_at: string;
   updated_at: string;
 }
-
-// ─── Roadmap ─────────────────────────────────────────────────────────────────
 
 export type StepType = "nib" | "spp_irt" | "halal" | "merek" | "bpom";
 export type StepStatus = "locked" | "unlocked" | "in_progress" | "completed";
@@ -58,8 +59,6 @@ export interface RoadmapStep {
   created_at: string;
 }
 
-// ─── User ─────────────────────────────────────────────────────────────────────
-
 export interface UserProfile {
   id: string;
   email: string;
@@ -68,8 +67,6 @@ export interface UserProfile {
   business_profile: BusinessProfile | null;
   roadmap: RoadmapStep[];
 }
-
-// ─── Formalization Step (UI-level, buat roadmap card) ────────────────────────
 
 export interface FormalizationStep {
   id: string;
@@ -86,8 +83,6 @@ export interface BenefitItem {
   text: string;
   unlocked: boolean;
 }
-
-// ─── Pages ───────────────────────────────────────────────────────────────────
 
 export type Page =
   | "dashboard"

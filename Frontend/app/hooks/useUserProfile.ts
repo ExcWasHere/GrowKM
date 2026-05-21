@@ -3,12 +3,13 @@ import { apiFetch } from "../lib/api";
 import type {
   UserProfile,
   BusinessProfile,
-  BusinessType,
-  BusinessLevel,
   RoadmapStep,
   StepType,
   StepStatus,
 } from "../components/Dashboard/types";
+
+// ─── Re-export BusinessProfile so existing imports don't break ────────────────
+export type { BusinessProfile };
 
 // ─── Re-export enriched step type (UI layer) ─────────────────────────────────
 
@@ -218,7 +219,7 @@ export function useUserProfile() {
         setRoadmapProgress(0);
       }
 
-      setLoadState("success");
+      setLoadState("success"); // ← fix: dipindah ke luar blok if/else
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal memuat profil";
       setError(msg);

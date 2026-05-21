@@ -17,8 +17,6 @@ interface ScannerPageProps {
   user: UserProfile;
 }
 
-// ─── Types sesuai response backend ───────────────────────────────────────────
-
 interface KbliWarning {
   wrong_kbli: string;
   reason: string;
@@ -76,11 +74,8 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>("idle");
-
   const meta = CARD_META["scanner"];
   const hasKbli = Boolean(user.business_profile?.kbli_code?.trim());
-
-  // ─── Run scan ──────────────────────────────────────────────────────────────
 
   const runScan = async () => {
     setLoading(true);
@@ -105,7 +100,6 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
           kbli_name: data.data.kbli_name,
           explanation: data.data.explanation,
           warnings: data.data.warnings ?? [],
-          // mismatch_alert bisa null kalau sudah sesuai
           mismatch_alert: data.data.mismatch_alert ?? null,
         });
       } else {
@@ -135,8 +129,6 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
     }
   };
 
-  // ─── Confirm KBLI ──────────────────────────────────────────────────────────
-
   const confirmKbli = async (kbliCode: string) => {
     setConfirmState("loading");
     try {
@@ -151,8 +143,6 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
       setConfirmState("error");
     }
   };
-
-  // ─── Render helpers ────────────────────────────────────────────────────────
 
   const renderConfirmSection = (kbliCode: string) => {
     if (confirmState === "success") {
@@ -296,8 +286,6 @@ export const ScannerPage: React.FC<ScannerPageProps> = ({ user }) => {
       </div>
     );
   };
-
-  // ─── Main Render ───────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-5">

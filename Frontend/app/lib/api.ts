@@ -6,7 +6,6 @@ export const apiFetch = async (
   endpoint: string,
   options: RequestInit = {}
 ) => {
-  // Get fresh token from Supabase session (always up-to-date)
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
 
@@ -23,7 +22,6 @@ export const apiFetch = async (
     headers,
   });
 
-  // Handle 401 Unauthorized - redirect to sign-in
   if (response.status === 401) {
     const currentPath = window.location.pathname;
     window.location.href = `/sign-in?redirect=${encodeURIComponent(currentPath)}`;

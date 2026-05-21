@@ -28,8 +28,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const level = businessProfile.level ?? "starter";
   const levelCfg = LEVEL_CONFIG[level];
-
-  // Hitung progress dari has_* flags
   const certFlags = [
     businessProfile.has_nib,
     businessProfile.has_pirt,
@@ -96,8 +94,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   );
 };
 
-// ─── Profile Card ──────────────────────────────────────────────────────────────
-
 const ProfileCard: React.FC<{
   user: UserProfile;
   businessProfile: BusinessProfile;
@@ -137,8 +133,6 @@ const ProfileCard: React.FC<{
     </div>
   );
 };
-
-// ─── Badges Card ───────────────────────────────────────────────────────────────
 
 const BadgesCard: React.FC<{
   businessProfile: BusinessProfile;
@@ -191,8 +185,6 @@ const BadgesCard: React.FC<{
     </div>
   );
 };
-
-// ─── Formalization Slider ──────────────────────────────────────────────────────
 
 const CERT_LIST = [
   { key: "has_nib",   label: "NIB",          desc: "Nomor Induk Berusaha"      },
