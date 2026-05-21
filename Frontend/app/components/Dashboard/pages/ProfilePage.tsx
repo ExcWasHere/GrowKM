@@ -33,6 +33,7 @@ interface ProfilePageProps {
   saveState?: "idle" | "loading" | "success" | "error";
   onSave: (updates: Partial<BusinessProfile>) => Promise<void>;
   onRoadmapRefresh?: () => void;
+  roadmapProgress: number;
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
@@ -43,7 +44,7 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
   ENTERPRISE: { label: "Enterprise", color: "from-purple-400 to-purple-600" },
 };
 
-const BUSINESS_TYPES: { value: UserProfile["businessType"]; label: string }[] =
+const BUSINESS_TYPES: { value: BusinessProfile["business_type"]; label: string }[] =
   [
     { value: "kuliner", label: "Kuliner & F&B" },
     { value: "fashion_craft", label: "Fashion & Kerajinan" },
@@ -59,10 +60,10 @@ const PROVINCES = [
   "Sulawesi Utara","Sulawesi Tengah","Sulawesi Selatan","Sulawesi Tenggara",
   "Maluku","Papua",
 ];
-
+  
 interface EditableDraft {
   business_name: string;
-  business_type: UserProfile["businessType"];
+  business_type: BusinessProfile["business_type"];
   kbli_code: string;
   description: string;
   province: string;
@@ -240,8 +241,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   saveState = "idle",
   onSave,
   onRoadmapRefresh,
+  roadmapProgress,
 }) => {
-  const levelCfg = LEVEL_CONFIG[user.level] ?? LEVEL_CONFIG.STARTER;
+  const levelCfg = LEVEL_CONFIG[businessProfile.level?.toUpperCase() as keyof typeof LEVEL_CONFIG] ?? LEVEL_CONFIG.STARTER;
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -480,13 +482,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">Tingkat Formalisasi</span>
               <span className="font-black text-2xl text-amber-500">
-                {user.progressPercent}%
+                {roadmapProgress}%
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-3 mb-3">
               <div
                 className="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${user.progressPercent}%` }}
+                style={{ width: `${roadmapProgress}%` }}
               />
             </div>
             <p className="text-xs text-gray-400">
@@ -673,12 +675,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   placeholder="Ceritakan usaha Anda secara singkat..."
                   multiline
                 />
-                {isEditing && (
-                  <p className="text-[10px] text-amber-500 mt-1 flex items-center gap-1">
-                    <Sparkles size={10} />
-                    AI akan merekomendasikan kode KBLI otomatis berdasarkan deskripsi ini saat kamu simpan.
-                  </p>
-                )}
               </div>
               <div className="md:col-span-2">
                 <Field
@@ -687,12 +683,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   value={draft.kbli_code}
                   editing={isEditing}
                   onChange={(v) => set("kbli_code", v)}
-                  placeholder="Diisi otomatis oleh AI setelah simpan"
-                  hint={
-                    !draft.kbli_code && isEditing
-                      ? "Simpan profil terlebih dahulu — AI akan merekomendasikan kode yang sesuai"
-                      : undefined
-                  }
                 />
               </div>
             </div>

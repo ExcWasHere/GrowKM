@@ -9,7 +9,7 @@ import Footer from "../common/landingpage/footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "GrowKM | Urus Legalitas Usaha Tanpa Bingung" },
+    { title: "GrowKM | Home" },
     {
       name: "description",
       content:

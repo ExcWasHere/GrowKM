@@ -1,49 +1,19 @@
 import { useState, useCallback, useEffect } from "react";
 import { apiFetch } from "../lib/api";
-import type { UserProfile } from "../components/Dashboard/types";
+import type {
+  UserProfile,
+  BusinessProfile,
+  RoadmapStep,
+  StepType,
+  StepStatus,
+} from "../components/Dashboard/types";
 
-export interface BusinessProfile {
-  business_name: string;
-  business_type: UserProfile["businessType"];
-  kbli_code: string;
-  description: string;
-  province: string;
-  city: string;
-  district: string;
-  production_location: string;
-  employee_count: number;
-  monthly_revenue_estimate: number;
-  has_nib: boolean;
-  has_pirt: boolean;
-  has_halal: boolean;
-  has_bpom: boolean;
-  has_merek: boolean;
-  nib_image?: string;
-  pirt_image?: string;
-  halal_image?: string;
-  bpom_image?: string;
-  merek_image?: string;
-  onboarding_completed: boolean;
-}
+// ─── Re-export BusinessProfile so existing imports don't break ────────────────
+export type { BusinessProfile };
 
-export type StepType = "nib" | "spp_irt" | "halal" | "bpom" | "merek";
-export type StepStatus = "locked" | "unlocked" | "in_progress" | "completed";
+// ─── Re-export enriched step type (UI layer) ─────────────────────────────────
 
-export interface RoadmapStepRaw {
-  id: string;
-  profile_id: string;
-  step_type: StepType;
-  step_order: number;
-  is_required: boolean;
-  status: StepStatus;
-  current_substep: number;
-  total_substeps: number | null;
-  started_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-}
-
-export interface RoadmapStep extends RoadmapStepRaw {
+export interface RoadmapStepEnriched extends RoadmapStep {
   label: string;
   description: string;
   cost: string;
@@ -52,8 +22,40 @@ export interface RoadmapStep extends RoadmapStepRaw {
   icon: string;
 }
 
-export type ProfileLoadState = "idle" | "loading" | "success" | "error";
-const STEP_META: Record<StepType, Omit<RoadmapStep, keyof RoadmapStepRaw>> = {
+// ─── Local default ────────────────────────────────────────────────────────────
+
+const DEFAULT_BUSINESS: BusinessProfile = {
+  id: "",
+  user_id: "",
+  business_name: "",
+  business_type: "lainnya",
+  kbli_code: "",
+  description: "",
+  province: "",
+  city: "",
+  district: "",
+  production_location: "",
+  employee_count: 0,
+  monthly_revenue_estimate: 0,
+  has_nib: false,
+  has_pirt: false,
+  has_halal: false,
+  has_bpom: false,
+  has_merek: false,
+  level: "starter",
+  score: 0,
+  streak_days: 0,
+  onboarding_completed: false,
+  created_at: "",
+  updated_at: "",
+};
+
+// ─── Step metadata (UI enrichment) ───────────────────────────────────────────
+
+const STEP_META: Record<
+  StepType,
+  Omit<RoadmapStepEnriched, keyof RoadmapStep>
+> = {
   nib: {
     label: "NIB (Nomor Induk Berusaha)",
     description:
@@ -101,7 +103,7 @@ const STEP_META: Record<StepType, Omit<RoadmapStep, keyof RoadmapStepRaw>> = {
   },
 };
 
-function enrichStep(raw: RoadmapStepRaw): RoadmapStep {
+function enrichStep(raw: RoadmapStep): RoadmapStepEnriched {
   const meta = STEP_META[raw.step_type] ?? {
     label: raw.step_type,
     description: "",
@@ -113,24 +115,7 @@ function enrichStep(raw: RoadmapStepRaw): RoadmapStep {
   return { ...raw, ...meta };
 }
 
-const DEFAULT_BUSINESS: BusinessProfile = {
-  business_name: "",
-  business_type: "lainnya",
-  kbli_code: "",
-  description: "",
-  province: "",
-  city: "",
-  district: "",
-  production_location: "",
-  employee_count: 0,
-  monthly_revenue_estimate: 0,
-  has_nib: false,
-  has_pirt: false,
-  has_halal: false,
-  has_bpom: false,
-  has_merek: false,
-  onboarding_completed: false,
-};
+// ─── localStorage helpers ─────────────────────────────────────────────────────
 
 function getNameFromLocalStorage(): string {
   try {
@@ -159,38 +144,7 @@ function getEmailFromLocalStorage(): string {
   }
 }
 
-function computeLevelAndProgress(
-  bp: BusinessProfile,
-  authName: string,
-): Pick<UserProfile, "level" | "progressPercent"> {
-  const profileFields: boolean[] = [
-    !!authName,
-    !!bp.business_name,
-    bp.business_type !== "lainnya",
-    !!bp.city,
-    !!bp.province,
-    !!bp.description,
-    !!bp.employee_count,
-    !!bp.monthly_revenue_estimate,
-  ];
-  const profileScore =
-    profileFields.filter(Boolean).length / profileFields.length;
-  const formalizationScore =
-    [bp.has_nib, bp.has_pirt, bp.has_halal, bp.has_bpom, bp.has_merek].filter(
-      Boolean,
-    ).length / 5;
-  const progressPercent = Math.round(
-    (profileScore * 0.5 + formalizationScore * 0.5) * 100,
-  );
-
-  let level: UserProfile["level"] = "STARTER";
-  if (progressPercent >= 80) level = "ENTERPRISE";
-  else if (progressPercent >= 60) level = "PRO";
-  else if (progressPercent >= 40) level = "ESTABLISHED";
-  else if (progressPercent >= 20) level = "GROWING";
-
-  return { level, progressPercent };
-}
+// ─── API response shapes ──────────────────────────────────────────────────────
 
 interface GetMeResponse {
   status: string;
@@ -203,7 +157,7 @@ interface GetMeResponse {
       created_at: string;
     };
     business_profile: Partial<BusinessProfile> | null;
-    roadmap: RoadmapStepRaw[] | null;
+    roadmap: RoadmapStep[] | null;
   };
 }
 
@@ -211,20 +165,30 @@ interface RoadmapStatusResponse {
   status: string;
   message: string;
   data: {
-    steps: RoadmapStepRaw[];
+    steps: RoadmapStep[];
     progress_percentage: number;
   };
 }
 
+// ─── Load / save state ────────────────────────────────────────────────────────
+
+export type ProfileLoadState = "idle" | "loading" | "success" | "error";
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useUserProfile() {
-  const [authName, setAuthName]               = useState<string>(getNameFromLocalStorage);
-  const [authEmail, setAuthEmail]             = useState<string>(getEmailFromLocalStorage);
-  const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(DEFAULT_BUSINESS);
-  const [roadmapSteps, setRoadmapSteps]       = useState<RoadmapStep[]>([]);
+  const [authName, setAuthName] = useState<string>(getNameFromLocalStorage);
+  const [authEmail, setAuthEmail] = useState<string>(getEmailFromLocalStorage);
+  const [businessProfile, setBusinessProfile] =
+    useState<BusinessProfile>(DEFAULT_BUSINESS);
+  const [roadmapSteps, setRoadmapSteps] = useState<RoadmapStepEnriched[]>([]);
   const [roadmapProgress, setRoadmapProgress] = useState(0);
-  const [loadState, setLoadState]             = useState<ProfileLoadState>("idle");
-  const [saveState, setSaveState]             = useState<ProfileLoadState>("idle");
-  const [error, setError]                     = useState<string | null>(null);
+  const [loadState, setLoadState] = useState<ProfileLoadState>("idle");
+  const [saveState, setSaveState] = useState<ProfileLoadState>("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+
   const fetchAll = useCallback(async () => {
     setLoadState("loading");
     setError(null);
@@ -234,6 +198,7 @@ export function useUserProfile() {
         const text = await res.text().catch(() => res.statusText);
         throw new Error(`API ${res.status}: ${text}`);
       }
+
       const json: GetMeResponse = await res.json();
       const { user, business_profile, roadmap } = json.data;
 
@@ -254,7 +219,7 @@ export function useUserProfile() {
         setRoadmapProgress(0);
       }
 
-      setLoadState("success");
+      setLoadState("success"); // ← fix: dipindah ke luar blok if/else
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal memuat profil";
       setError(msg);
@@ -265,19 +230,19 @@ export function useUserProfile() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-  const computed = computeLevelAndProgress(businessProfile, authName);
+
+  // ── Derived UserProfile (buat di-pass ke komponen) ─────────────────────────
+
   const userProfile: UserProfile = {
-    name:            authName || "Pengguna",
-    businessName:    businessProfile.business_name,
-    businessType:    businessProfile.business_type,
-    city:            businessProfile.city,
-    monthlyRevenue:  businessProfile.monthly_revenue_estimate
-      ? `${(businessProfile.monthly_revenue_estimate / 1_000_000).toFixed(0)}jt`
-      : "",
-    employeeCount:   businessProfile.employee_count,
-    level:           computed.level,
-    progressPercent: computed.progressPercent,
+    id: businessProfile.user_id,
+    email: authEmail,
+    name: authName || "Pengguna",
+    created_at: businessProfile.created_at,
+    business_profile: businessProfile.id ? businessProfile : null,
+    roadmap: roadmapSteps,
   };
+
+  // ── Update business profile ────────────────────────────────────────────────
 
   const updateBusinessProfile = useCallback(
     async (updates: Partial<BusinessProfile>): Promise<void> => {
@@ -291,22 +256,22 @@ export function useUserProfile() {
         const res = await apiFetch("/api/users/business-profile", {
           method: "POST",
           body: JSON.stringify({
-            business_name:            next.business_name            || undefined,
-            business_type:            next.business_type,
-            kbli_code:                next.kbli_code                || undefined,
-            description:              next.description              || undefined,
-            province:                 next.province                 || undefined,
-            city:                     next.city                     || undefined,
-            district:                 next.district                 || undefined,
-            production_location:      next.production_location      || undefined,
-            employee_count:           next.employee_count           || undefined,
+            business_name: next.business_name || undefined,
+            business_type: next.business_type,
+            kbli_code: next.kbli_code || undefined,
+            description: next.description || undefined,
+            province: next.province || undefined,
+            city: next.city || undefined,
+            district: next.district || undefined,
+            production_location: next.production_location || undefined,
+            employee_count: next.employee_count || undefined,
             monthly_revenue_estimate: next.monthly_revenue_estimate || undefined,
-            has_nib:                  next.has_nib,
-            has_pirt:                 next.has_pirt,
-            has_halal:                next.has_halal,
-            has_bpom:                 next.has_bpom,
-            has_merek:                next.has_merek,
-            onboarding_completed:     next.onboarding_completed,
+            has_nib: next.has_nib,
+            has_pirt: next.has_pirt,
+            has_halal: next.has_halal,
+            has_bpom: next.has_bpom,
+            has_merek: next.has_merek,
+            onboarding_completed: next.onboarding_completed,
           }),
         });
 
@@ -317,8 +282,9 @@ export function useUserProfile() {
 
         setSaveState("success");
       } catch (err) {
-        setBusinessProfile(prev);
-        const msg = err instanceof Error ? err.message : "Gagal menyimpan profil";
+        setBusinessProfile(prev); // rollback
+        const msg =
+          err instanceof Error ? err.message : "Gagal menyimpan profil";
         setError(msg);
         setSaveState("error");
         throw err;
@@ -326,6 +292,8 @@ export function useUserProfile() {
     },
     [businessProfile],
   );
+
+  // ── Update roadmap step status ─────────────────────────────────────────────
 
   const updateStepStatus = useCallback(
     async (stepType: StepType, status: "in_progress" | "completed") => {

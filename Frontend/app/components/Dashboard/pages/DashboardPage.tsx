@@ -10,10 +10,8 @@ import {
   X,
   ZoomIn,
 } from "lucide-react";
-import type { UserProfile } from "../../Dashboard/types";
-import type { Page } from "../../Dashboard/types";
+import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
 import { getBadges, LEVEL_CONFIG } from "../../Dashboard/constants";
-import type { BusinessProfile } from "../../../hooks/useUserProfile";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
 
 interface DashboardPageProps {
@@ -28,7 +26,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   businessProfile,
   onNavigate,
 }) => {
-  const levelCfg = LEVEL_CONFIG[user.level];
+  const level = businessProfile.level ?? "starter";
+  const levelCfg = LEVEL_CONFIG[level];
+  const certFlags = [
+    businessProfile.has_nib,
+    businessProfile.has_pirt,
+    businessProfile.has_halal,
+    businessProfile.has_bpom,
+    businessProfile.has_merek,
+  ];
+  const progressPercent = Math.round(
+    (certFlags.filter(Boolean).length / certFlags.length) * 100
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
@@ -43,13 +52,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {levelCfg.label}
               </h3>
               <p className="text-xs text-gray-500">
-                {user.businessType} • {user.city}
+                {businessProfile.business_type} • {businessProfile.city}
               </p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500 mb-1">Formalisasi</p>
               <p className="font-black text-2xl text-amber-500">
-                {user.progressPercent}%
+                {progressPercent}%
               </p>
             </div>
           </div>
@@ -57,14 +66,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="w-full bg-gray-100 rounded-full h-3">
               <div
                 className="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${user.progressPercent}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
         </div>
 
         {/* Profile Card — mobile only */}
-        <ProfileCard user={user} className="lg:hidden" />
+        <ProfileCard user={user} businessProfile={businessProfile} className="lg:hidden" />
 
         {/* Feature Grid */}
         <FeatureGrid onNavigate={onNavigate} />
@@ -78,18 +87,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* Sidebar */}
       <div className="hidden lg:flex lg:col-span-4 flex-col gap-6">
-        <ProfileCard user={user} />
+        <ProfileCard user={user} businessProfile={businessProfile} />
         <BadgesCard businessProfile={businessProfile} />
       </div>
     </div>
   );
 };
 
-const ProfileCard: React.FC<{ user: UserProfile; className?: string }> = ({
-  user,
-  className = "",
-}) => {
-  const levelCfg = LEVEL_CONFIG[user.level];
+const ProfileCard: React.FC<{
+  user: UserProfile;
+  businessProfile: BusinessProfile;
+  className?: string;
+}> = ({ user, businessProfile, className = "" }) => {
+  const level = businessProfile.level ?? "starter";
+  const levelCfg = LEVEL_CONFIG[level];
+
   return (
     <div
       className={`bg-white rounded-xl p-6 md:p-8 border border-amber-200 text-center relative overflow-hidden shadow-sm ${className}`}
@@ -105,10 +117,10 @@ const ProfileCard: React.FC<{ user: UserProfile; className?: string }> = ({
         {user.name}
       </h4>
       <p className="text-gray-500 text-xs font-medium mb-1">
-        {user.businessName}
+        {businessProfile.business_name}
       </p>
       <p className="text-gray-400 text-xs font-medium mb-4 md:mb-6">
-        {user.businessType} • {user.city}
+        {businessProfile.business_type} • {businessProfile.city}
       </p>
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 py-3 md:py-4 rounded-lg border border-amber-100">
         <p className="text-[9px] uppercase font-bold text-amber-500 mb-1">
@@ -165,13 +177,9 @@ const BadgesCard: React.FC<{
         className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-bold text-amber-600 hover:text-orange-500 transition-colors"
       >
         {expanded ? (
-          <>
-            <ChevronUp size={14} /> Sembunyikan
-          </>
+          <><ChevronUp size={14} /> Sembunyikan</>
         ) : (
-          <>
-            <ChevronDown size={14} /> Lihat {badges.length - 3} lainnya
-          </>
+          <><ChevronDown size={14} /> Lihat {badges.length - 3} lainnya</>
         )}
       </button>
     </div>
@@ -179,39 +187,14 @@ const BadgesCard: React.FC<{
 };
 
 const CERT_LIST = [
-  {
-    key: "has_nib",
-    label: "NIB",
-    desc: "Nomor Induk Berusaha",
-    imageKey: "nib_image",
-  },
-  {
-    key: "has_pirt",
-    label: "SPP-IRT / PIRT",
-    desc: "Izin pangan rumah tangga",
-    imageKey: "pirt_image",
-  },
-  {
-    key: "has_halal",
-    label: "Halal",
-    desc: "Sertifikat Halal MUI / BPJPH",
-    imageKey: "halal_image",
-  },
-  {
-    key: "has_bpom",
-    label: "BPOM",
-    desc: "Izin edar BPOM",
-    imageKey: "bpom_image",
-  },
-  {
-    key: "has_merek",
-    label: "Merek",
-    desc: "Pendaftaran merek DJKI",
-    imageKey: "merek_image",
-  },
+  { key: "has_nib",   label: "NIB",          desc: "Nomor Induk Berusaha"      },
+  { key: "has_pirt",  label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga" },
+  { key: "has_halal", label: "Halal",         desc: "Sertifikat Halal MUI / BPJPH" },
+  { key: "has_bpom",  label: "BPOM",          desc: "Izin edar BPOM"           },
+  { key: "has_merek", label: "Merek",         desc: "Pendaftaran merek DJKI"   },
 ] as const;
 
-type CertImageKey = (typeof CERT_LIST)[number]["imageKey"];
+type CertKey = (typeof CERT_LIST)[number]["key"];
 
 interface FormalizationSliderProps {
   businessProfile: BusinessProfile;
@@ -225,6 +208,7 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -235,28 +219,11 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
     return () => ro.disconnect();
   }, []);
 
-  const imageValueMap: Record<CertImageKey, string | undefined> = {
-    nib_image: businessProfile.nib_image,
-    pirt_image: businessProfile.pirt_image,
-    halal_image: businessProfile.halal_image,
-    bpom_image: businessProfile.bpom_image,
-    merek_image: businessProfile.merek_image,
-  };
-
-  const [selectedImage, setSelectedImage] = useState<{
-    src: string;
-    label: string;
-    desc: string;
-  } | null>(null);
-  const uploadedCount = CERT_LIST.filter(
-    (c) => !!imageValueMap[c.imageKey],
-  ).length;
   const totalPages = Math.ceil(CERT_LIST.length / perPage);
   const safePage = Math.min(page, totalPages - 1);
-  const slice = CERT_LIST.slice(
-    safePage * perPage,
-    safePage * perPage + perPage,
-  );
+  const slice = CERT_LIST.slice(safePage * perPage, safePage * perPage + perPage);
+
+  const earnedCount = CERT_LIST.filter((c) => businessProfile[c.key]).length;
 
   return (
     <div
@@ -270,62 +237,39 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
           Status Formalisasi
         </span>
         <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
-          {uploadedCount}/5 diunggah
+          {earnedCount}/5 selesai
         </span>
       </div>
 
-      {/* Gallery Grid */}
+      {/* Grid */}
       <div
         className="grid gap-3 mb-4"
         style={{ gridTemplateColumns: `repeat(${perPage}, minmax(0, 1fr))` }}
       >
-        {slice.map(({ label, desc, imageKey }) => {
-          const imageData = imageValueMap[imageKey];
-
-          return imageData ? (
+        {slice.map(({ key, label, desc }) => {
+          const earned = businessProfile[key];
+          return earned ? (
             <div
-              onClick={() => setSelectedImage({ src: imageData, label, desc })}
-              key={imageKey}
-              className="relative rounded-xl overflow-hidden border border-green-200 bg-green-50 cursor-pointer group"
+              key={key}
+              className="relative rounded-xl overflow-hidden border border-green-200 bg-green-50 flex flex-col items-center justify-center gap-2 p-3 text-center"
               style={{ aspectRatio: "1 / 1.1" }}
             >
-              <img
-                src={imageData}
-                alt={`Sertifikat ${label}`}
-                className="w-full h-full object-cover"
-              />
-              {/* Gradient overlay bawah */}
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/55 transition-all duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
-                  <ZoomIn size={18} className="text-gray-700" />
-                </div>
-              </div>
-              {/* Check badge */}
               <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                 <CheckCircle size={12} className="text-white" />
               </div>
-              {/* Label bawah */}
-              <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                <p className="text-[11px] font-bold text-white leading-tight">
-                  {label}
-                </p>
-                <p className="text-[9px] text-white/75 leading-tight mt-0.5">
-                  {desc}
-                </p>
-              </div>
+              <p className="text-[11px] font-bold text-green-800 leading-tight">{label}</p>
+              <p className="text-[9px] text-green-600 leading-tight">{desc}</p>
             </div>
           ) : (
             <div
-              key={imageKey}
+              key={key}
               className="rounded-xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2 p-3 text-center"
               style={{ aspectRatio: "1 / 1.1" }}
             >
-              <p className="text-[11px] font-bold text-gray-700 leading-tight">
-                {label}
-              </p>
+              <p className="text-[11px] font-bold text-gray-700 leading-tight">{label}</p>
               <p className="text-[9px] text-gray-400 leading-tight">{desc}</p>
               <span className="text-[9px] text-gray-400 border border-dashed border-gray-300 rounded-full px-2 py-0.5 mt-0.5">
-                Belum diunggah
+                Belum selesai
               </span>
             </div>
           );
@@ -360,48 +304,6 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
           >
             <ChevronRight size={14} />
           </button>
-          {selectedImage && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-              onClick={() => setSelectedImage(null)}
-            >
-              <div
-                className="relative bg-white rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <div>
-                    <p className="font-bold text-sm text-gray-800">
-                      {selectedImage.label}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {selectedImage.desc}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedImage(null)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-                {/* Image */}
-                <img
-                  src={selectedImage.src}
-                  alt={selectedImage.label}
-                  className="w-full object-contain max-h-[70vh]"
-                />
-                {/* Footer badge */}
-                <div className="px-4 py-3 bg-green-50 border-t border-green-100 flex items-center gap-2">
-                  <CheckCircle size={14} className="text-green-500" />
-                  <span className="text-xs font-semibold text-green-700">
-                    Sertifikat telah diunggah
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
