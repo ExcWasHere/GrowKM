@@ -90,4 +90,5 @@ export type Page =
   | "chat"
   | "scanner"
   | "finance"
+  | "market"
   | "profile";

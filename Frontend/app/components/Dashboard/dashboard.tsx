@@ -12,6 +12,7 @@ import { ChatPage } from "../../components/Dashboard/pages/ChatPage";
 import { ScannerPage } from "../../components/Dashboard/pages/ScannerPage";
 import { FinancePage } from "../../components/Dashboard/pages/FinancePage";
 import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage";
+import { MarketPage } from "../../components/Dashboard/pages/MarketGate";
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
@@ -20,6 +21,7 @@ const PAGE_TITLES: Record<Page, string> = {
   scanner:   "KBLI Matcher",
   finance:   "Financial Record",
   profile:   "Business Profile",
+  market:    "Market Gate",
 };
 
 export default function GrowKMDashboard() {
@@ -41,7 +43,6 @@ export default function GrowKMDashboard() {
     refetch,
   } = useUserProfile();
 
-  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -57,7 +58,6 @@ export default function GrowKMDashboard() {
 
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         const currentPath = window.location.pathname;
@@ -70,7 +70,6 @@ export default function GrowKMDashboard() {
     };
   }, [navigate]);
 
-  // Show loading while checking auth
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -131,6 +130,8 @@ export default function GrowKMDashboard() {
             roadmapProgress={roadmapProgress}
           />
         );
+      case "market":
+        return <MarketPage user={userProfile} businessProfile={businessProfile} />;
     }
   };
 
