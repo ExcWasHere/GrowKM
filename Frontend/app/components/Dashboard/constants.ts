@@ -77,7 +77,6 @@ export const KULINER_STEPS: FormalizationStep[] = [
   },
 ];
 
-// Key sekarang lowercase sesuai BusinessLevel dari types.ts
 export const LEVEL_CONFIG: Record<BusinessLevel, { label: string; color: string; range: string }> = {
   starter: {
     label: "Starter",
@@ -121,7 +120,7 @@ export const FEATURE_CARDS = [
   {
     id: "scanner",
     icon: "🛡️",
-    title: "Compliance Scanner",
+    title: "KBLI Matcher",
     subtitle: "Smart KBLI Matcher",
     description: "Cek apakah izin yang kamu punya sudah benar & sesuai",
     color: "from-orange-500 to-red-500",
@@ -153,7 +152,6 @@ export const FEATURE_CARDS = [
   },
 ];
 
-// Sekarang pakai has_nib, has_pirt dll — sesuai BusinessProfile baru
 export function getBadges(bp: BusinessProfile) {
   return [
     { icon: "🏛️", name: "Punya NIB",       earned: bp.has_nib   },
@@ -163,9 +161,3 @@ export function getBadges(bp: BusinessProfile) {
     { icon: "™️", name: "Merek Terdaftar",  earned: bp.has_merek },
   ];
 }
-
-export const RECENT_ACTIONS = [
-  { label: "Guide to Grow",      detail: "NIB selesai ✅",    completed: true  },
-  { label: "Compliance Scanner", detail: "KBLI dicek",        completed: true  },
-  { label: "SPP-IRT",            detail: "Sedang diproses",   completed: false },
-];
