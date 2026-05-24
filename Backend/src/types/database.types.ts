@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       business_profiles: {
         Row: {
+          bpom_image_path: string | null
           business_name: string | null
           business_type: Database["public"]["Enums"]["business_type_enum"]
           city: string | null
@@ -23,6 +24,7 @@ export type Database = {
           description: string | null
           district: string | null
           employee_count: number
+          halal_image_path: string | null
           has_bpom: boolean
           has_halal: boolean
           has_merek: boolean
@@ -31,8 +33,11 @@ export type Database = {
           id: string
           kbli_code: string | null
           level: Database["public"]["Enums"]["level_enum"]
+          merek_image_path: string | null
           monthly_revenue_estimate: number | null
+          nib_image_path: string | null
           onboarding_completed: boolean
+          pirt_image_path: string | null
           production_location: string | null
           province: string | null
           score: number
@@ -41,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bpom_image_path?: string | null
           business_name?: string | null
           business_type: Database["public"]["Enums"]["business_type_enum"]
           city?: string | null
@@ -48,6 +54,7 @@ export type Database = {
           description?: string | null
           district?: string | null
           employee_count?: number
+          halal_image_path?: string | null
           has_bpom?: boolean
           has_halal?: boolean
           has_merek?: boolean
@@ -56,8 +63,11 @@ export type Database = {
           id?: string
           kbli_code?: string | null
           level?: Database["public"]["Enums"]["level_enum"]
+          merek_image_path?: string | null
           monthly_revenue_estimate?: number | null
+          nib_image_path?: string | null
           onboarding_completed?: boolean
+          pirt_image_path?: string | null
           production_location?: string | null
           province?: string | null
           score?: number
@@ -66,6 +76,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bpom_image_path?: string | null
           business_name?: string | null
           business_type?: Database["public"]["Enums"]["business_type_enum"]
           city?: string | null
@@ -73,6 +84,7 @@ export type Database = {
           description?: string | null
           district?: string | null
           employee_count?: number
+          halal_image_path?: string | null
           has_bpom?: boolean
           has_halal?: boolean
           has_merek?: boolean
@@ -81,8 +93,11 @@ export type Database = {
           id?: string
           kbli_code?: string | null
           level?: Database["public"]["Enums"]["level_enum"]
+          merek_image_path?: string | null
           monthly_revenue_estimate?: number | null
+          nib_image_path?: string | null
           onboarding_completed?: boolean
+          pirt_image_path?: string | null
           production_location?: string | null
           province?: string | null
           score?: number

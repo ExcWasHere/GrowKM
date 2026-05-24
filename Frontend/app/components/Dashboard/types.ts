@@ -29,11 +29,11 @@ export interface BusinessProfile {
   has_halal: boolean;
   has_bpom: boolean;
   has_merek: boolean;
-  nib_image?: string;
-  pirt_image?: string;
-  halal_image?: string;
-  bpom_image?: string;
-  merek_image?: string;
+  nib_image_path?: string | null;
+  pirt_image_path?: string | null;
+  halal_image_path?: string | null;
+  bpom_image_path?: string | null;
+  merek_image_path?: string | null;
   level: BusinessLevel;
   score: number;
   streak_days: number;

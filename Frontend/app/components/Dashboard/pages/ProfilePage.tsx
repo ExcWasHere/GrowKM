@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   User,
   Building2,
@@ -22,7 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import type { UserProfile } from "../../Dashboard/types";
+import type { UserProfile, StepType } from "../../Dashboard/types";
 import type { BusinessProfile } from "../../../hooks/useUserProfile";
 import { apiFetch } from "../../../lib/api";
 
@@ -34,6 +34,11 @@ interface ProfilePageProps {
   onSave: (updates: Partial<BusinessProfile>) => Promise<void>;
   onRoadmapRefresh?: () => void;
   roadmapProgress: number;
+  onUploadDocument: (
+    stepType: StepType,
+    file: File,
+  ) => Promise<{ path: string; signed_url: string }>;
+  onGetDocumentSignedUrl: (stepType: StepType) => Promise<string | null>;
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
@@ -77,11 +82,6 @@ interface EditableDraft {
   has_halal: boolean;
   has_bpom: boolean;
   has_merek: boolean;
-  nib_image?: string;
-  pirt_image?: string;
-  halal_image?: string;
-  bpom_image?: string;
-  merek_image?: string;
 }
 
 function bpToDraft(bp: BusinessProfile): EditableDraft {
@@ -103,11 +103,6 @@ function bpToDraft(bp: BusinessProfile): EditableDraft {
     has_halal: bp.has_halal,
     has_bpom: bp.has_bpom,
     has_merek: bp.has_merek,
-    nib_image: bp.nib_image,
-    pirt_image: bp.pirt_image,
-    halal_image: bp.halal_image,
-    bpom_image: bp.bpom_image,
-    merek_image: bp.merek_image,
   };
 }
 
@@ -130,11 +125,6 @@ function draftToBp(draft: EditableDraft): Partial<BusinessProfile> {
     has_halal: draft.has_halal,
     has_bpom: draft.has_bpom,
     has_merek: draft.has_merek,
-    nib_image: draft.nib_image,
-    pirt_image: draft.pirt_image,
-    halal_image: draft.halal_image,
-    bpom_image: draft.bpom_image,
-    merek_image: draft.merek_image,
   };
 }
 
@@ -150,6 +140,82 @@ interface KbliModalProps {
   onConfirm: () => Promise<void>;
   onSkip: () => void;
 }
+
+interface DocumentPreviewModalProps {
+  url: string;
+  label: string;
+  onClose: () => void;
+}
+
+const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
+  url,
+  label,
+  onClose,
+}) => {
+  const isPdf = url.toLowerCase().includes(".pdf") || url.includes("application/pdf");
+
+  // Close on ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      {/* Header */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-white z-10">
+        <div className="flex items-center gap-2">
+          <FileText size={18} className="text-amber-300" />
+          <span className="font-bold text-sm">Bukti {label}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="px-3 py-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-colors"
+          >
+            Buka di tab baru
+          </a>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-colors"
+            aria-label="Tutup preview"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div
+        className="relative max-w-5xl max-h-[90vh] w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isPdf ? (
+          <iframe
+            src={url}
+            title={`Preview ${label}`}
+            className="w-full h-[85vh] rounded-lg bg-white shadow-2xl"
+          />
+        ) : (
+          <img
+            src={url}
+            alt={`Bukti ${label}`}
+            className="max-w-full max-h-[85vh] mx-auto rounded-lg shadow-2xl object-contain"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
 
 const KbliConfirmModal: React.FC<KbliModalProps> = ({
   kbliCode,
@@ -242,6 +308,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onSave,
   onRoadmapRefresh,
   roadmapProgress,
+  onUploadDocument,
+  onGetDocumentSignedUrl,
 }) => {
   const levelCfg = LEVEL_CONFIG[businessProfile.level?.toUpperCase() as keyof typeof LEVEL_CONFIG] ?? LEVEL_CONFIG.STARTER;
   const [isEditing, setIsEditing] = useState(false);
@@ -254,12 +322,41 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     bpToDraft(businessProfile),
   );
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [signedUrls, setSignedUrls] = useState<Partial<Record<StepType, string>>>({});
+  const [uploadingStep, setUploadingStep] = useState<StepType | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLabel, setPreviewLabel] = useState<string>("");
 
   const prevBp = useRef(businessProfile);
   if (prevBp.current !== businessProfile && !isEditing) {
     prevBp.current = businessProfile;
     setDraft(bpToDraft(businessProfile));
   }
+
+  // Lazy-fetch signed URLs untuk dokumen yang udah di-upload
+  useEffect(() => {
+    const pairs: [StepType, string | null | undefined][] = [
+      ["nib", businessProfile.nib_image_path],
+      ["spp_irt", businessProfile.pirt_image_path],
+      ["halal", businessProfile.halal_image_path],
+      ["bpom", businessProfile.bpom_image_path],
+      ["merek", businessProfile.merek_image_path],
+    ];
+    pairs.forEach(async ([step, path]) => {
+      if (path && !signedUrls[step]) {
+        const url = await onGetDocumentSignedUrl(step);
+        if (url) setSignedUrls((prev) => ({ ...prev, [step]: url }));
+      }
+    });
+  }, [
+    businessProfile.nib_image_path,
+    businessProfile.pirt_image_path,
+    businessProfile.halal_image_path,
+    businessProfile.bpom_image_path,
+    businessProfile.merek_image_path,
+    onGetDocumentSignedUrl,
+    signedUrls,
+  ]);
 
   const handleEdit = () => {
     setDraft(bpToDraft(businessProfile));
@@ -359,22 +456,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     businessProfile.has_merek,
   ].filter(Boolean).length;
 
-  const handleCertFileChange = (
-    imageKey: string,
+  const handleCertFileChange = async (
+    stepType: StepType,
     certKey: keyof EditableDraft,
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setDraft((prev) => ({
-        ...prev,
-        [imageKey]: reader.result as string,
-        [certKey]: true,
-      }));
-    };
-    reader.readAsDataURL(file);
+
+    setUploadingStep(stepType);
+    setSaveError(null);
+    try {
+      const { signed_url } = await onUploadDocument(stepType, file);
+      setSignedUrls((prev) => ({ ...prev, [stepType]: signed_url }));
+      setDraft((prev) => ({ ...prev, [certKey]: true }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload gagal";
+      setSaveError(msg);
+    } finally {
+      setUploadingStep(null);
+      // Reset input value supaya bisa pilih file yang sama lagi setelah error
+      e.target.value = "";
+    }
   };
 
   return (
@@ -385,6 +488,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           kbliCode={pendingKbli}
           onConfirm={handleKbliConfirm}
           onSkip={handleKbliSkip}
+        />
+      )}
+
+      {/* Document Preview Lightbox */}
+      {previewUrl && (
+        <DocumentPreviewModal
+          url={previewUrl}
+          label={previewLabel}
+          onClose={() => {
+            setPreviewUrl(null);
+            setPreviewLabel("");
+          }}
         />
       )}
 
@@ -697,25 +812,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {(
                 [
-                  { key: "has_nib",   label: "NIB",        desc: "Nomor Induk Berusaha",       icon: "🏛️", imageKey: "nib_image"   },
-                  { key: "has_pirt",  label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga", icon: "🍽️", imageKey: "pirt_image"  },
-                  { key: "has_halal", label: "Halal",       desc: "Sertifikat halal MUI / BPJPH", icon: "☪️", imageKey: "halal_image" },
-                  { key: "has_bpom",  label: "BPOM",        desc: "Izin edar BPOM",             icon: "💊", imageKey: "bpom_image"  },
-                  { key: "has_merek", label: "Merek",       desc: "Pendaftaran merek DJKI",      icon: "™️", imageKey: "merek_image" },
+                  { key: "has_nib",   stepType: "nib",     label: "NIB",        desc: "Nomor Induk Berusaha",       icon: "🏛️" },
+                  { key: "has_pirt",  stepType: "spp_irt", label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga", icon: "🍽️" },
+                  { key: "has_halal", stepType: "halal",   label: "Halal",       desc: "Sertifikat halal MUI / BPJPH", icon: "☪️" },
+                  { key: "has_bpom",  stepType: "bpom",    label: "BPOM",        desc: "Izin edar BPOM",             icon: "💊" },
+                  { key: "has_merek", stepType: "merek",   label: "Merek",       desc: "Pendaftaran merek DJKI",      icon: "™️" },
                 ] as {
                   key: keyof BusinessProfile;
+                  stepType: StepType;
                   label: string;
                   desc: string;
                   icon: string;
-                  imageKey: string;
                 }[]
-              ).map(({ key, label, desc, icon, imageKey }) => {
+              ).map(({ key, stepType, label, desc, icon }) => {
                 const checked = isEditing
                   ? (draft[key as keyof EditableDraft] as boolean)
                   : (businessProfile[key] as boolean);
-                const imageData = isEditing
-                  ? (draft[imageKey as keyof EditableDraft] as string | undefined)
-                  : (businessProfile[imageKey as keyof BusinessProfile] as string | undefined);
+                const signedUrl = signedUrls[stepType];
+                const isUploading = uploadingStep === stepType;
+                const inputId = `file-input-${stepType}`;
 
                 return (
                   <div
@@ -746,51 +861,80 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
                     {isEditing && (
                       <>
-                        {imageData ? (
-                          <div className="relative group">
-                            <img
-                              src={imageData}
-                              alt={`Bukti ${label}`}
-                              className="w-full h-20 object-cover rounded-lg border border-green-200"
-                            />
+                        {isUploading ? (
+                          <div className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-amber-300 rounded-lg py-3 text-xs text-amber-600 bg-amber-50">
+                            <Loader2 size={16} className="animate-spin" />
+                            <span>Mengunggah...</span>
+                          </div>
+                        ) : signedUrl ? (
+                          <div className="relative">
                             <button
                               type="button"
-                              onClick={() => fileInputRefs.current[imageKey]?.click()}
-                              className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                setPreviewUrl(signedUrl);
+                                setPreviewLabel(label);
+                              }}
+                              className="block w-full group/preview"
+                              title="Klik untuk preview"
                             >
-                              <Upload size={16} className="text-white" />
+                              <img
+                                src={signedUrl}
+                                alt={`Bukti ${label}`}
+                                className="w-full h-20 object-cover rounded-lg border border-green-200 group-hover/preview:border-amber-400 transition-colors"
+                              />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRefs.current[stepType]?.click();
+                              }}
+                              className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-amber-500 hover:text-white text-amber-600 rounded-full shadow-md border border-amber-200 transition-colors"
+                              title="Ganti file"
+                            >
+                              <Upload size={12} />
                             </button>
                             <p className="text-[10px] text-green-600 font-semibold mt-1 text-center">
-                              Bukti diunggah ✓
+                              Klik gambar untuk preview
                             </p>
                           </div>
                         ) : (
                           <button
                             type="button"
-                            onClick={() => fileInputRefs.current[imageKey]?.click()}
+                            onClick={() => fileInputRefs.current[stepType]?.click()}
                             className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-300 rounded-lg py-3 text-xs text-gray-400 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 transition-all"
                           >
                             <Upload size={16} />
                             <span>Unggah bukti sertifikat</span>
-                            <span className="text-[10px]">JPG, PNG, PDF</span>
+                            <span className="text-[10px]">JPG, PNG, WEBP, PDF</span>
                           </button>
                         )}
                         <input
-                          ref={(el) => { fileInputRefs.current[imageKey] = el; }}
+                          id={inputId}
+                          ref={(el) => { fileInputRefs.current[stepType] = el; }}
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
                           className="hidden"
-                          onChange={(e) => handleCertFileChange(imageKey, key as keyof EditableDraft, e)}
+                          onChange={(e) => handleCertFileChange(stepType, key as keyof EditableDraft, e)}
                         />
                       </>
                     )}
 
-                    {!isEditing && imageData && (
-                      <img
-                        src={imageData}
-                        alt={`Bukti ${label}`}
-                        className="w-full h-16 object-cover rounded-lg border border-green-200"
-                      />
+                    {!isEditing && signedUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewUrl(signedUrl);
+                          setPreviewLabel(label);
+                        }}
+                        className="block w-full"
+                      >
+                        <img
+                          src={signedUrl}
+                          alt={`Bukti ${label}`}
+                          className="w-full h-16 object-cover rounded-lg border border-green-200 hover:border-amber-400 transition-colors cursor-zoom-in"
+                        />
+                      </button>
                     )}
                   </div>
                 );

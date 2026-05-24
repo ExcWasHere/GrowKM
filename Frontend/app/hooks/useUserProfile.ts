@@ -42,6 +42,11 @@ const DEFAULT_BUSINESS: BusinessProfile = {
   has_halal: false,
   has_bpom: false,
   has_merek: false,
+  nib_image_path: null,
+  pirt_image_path: null,
+  halal_image_path: null,
+  bpom_image_path: null,
+  merek_image_path: null,
   level: "starter",
   score: 0,
   streak_days: 0,
@@ -316,6 +321,83 @@ export function useUserProfile() {
     [],
   );
 
+  // ── Document upload (multipart) ────────────────────────────────────────────
+
+  const uploadDocument = useCallback(
+    async (stepType: StepType, file: File): Promise<{ path: string; signed_url: string }> => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await apiFetch(
+        `/api/users/business-profile/documents/${stepType}`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.statusText);
+        throw new Error(`Upload gagal (${res.status}): ${text}`);
+      }
+
+      const json = await res.json();
+      const { path, signed_url } = json.data as {
+        path: string;
+        signed_url: string;
+      };
+
+      // Update local state — backend udah simpan path ke DB
+      const colMap: Record<StepType, keyof BusinessProfile> = {
+        nib:     "nib_image_path",
+        spp_irt: "pirt_image_path",
+        halal:   "halal_image_path",
+        bpom:    "bpom_image_path",
+        merek:   "merek_image_path",
+      };
+      const col = colMap[stepType];
+      setBusinessProfile((prev) => ({ ...prev, [col]: path }));
+
+      return { path, signed_url };
+    },
+    [],
+  );
+
+  const getDocumentSignedUrl = useCallback(
+    async (stepType: StepType): Promise<string | null> => {
+      const res = await apiFetch(
+        `/api/users/business-profile/documents/${stepType}/url`,
+      );
+      if (!res.ok) return null;
+      const json = await res.json();
+      return (json.data?.signed_url as string) ?? null;
+    },
+    [],
+  );
+
+  const deleteDocument = useCallback(
+    async (stepType: StepType): Promise<void> => {
+      const res = await apiFetch(
+        `/api/users/business-profile/documents/${stepType}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.statusText);
+        throw new Error(`Delete gagal (${res.status}): ${text}`);
+      }
+      const colMap: Record<StepType, keyof BusinessProfile> = {
+        nib:     "nib_image_path",
+        spp_irt: "pirt_image_path",
+        halal:   "halal_image_path",
+        bpom:    "bpom_image_path",
+        merek:   "merek_image_path",
+      };
+      const col = colMap[stepType];
+      setBusinessProfile((prev) => ({ ...prev, [col]: null }));
+    },
+    [],
+  );
+
   return {
     userProfile,
     businessProfile,
@@ -328,6 +410,9 @@ export function useUserProfile() {
     roadmapSteps,
     roadmapProgress,
     updateStepStatus,
+    uploadDocument,
+    getDocumentSignedUrl,
+    deleteDocument,
     refetch: fetchAll,
   };
 }

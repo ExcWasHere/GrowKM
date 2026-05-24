@@ -41,6 +41,8 @@ export default function GrowKMDashboard() {
     roadmapSteps,
     roadmapProgress,
     refetch,
+    uploadDocument,
+    getDocumentSignedUrl,
   } = useUserProfile();
 
   useEffect(() => {
@@ -128,6 +130,8 @@ export default function GrowKMDashboard() {
             onSave={updateBusinessProfile}
             onRoadmapRefresh={refetch}
             roadmapProgress={roadmapProgress}
+            onUploadDocument={uploadDocument}
+            onGetDocumentSignedUrl={getDocumentSignedUrl}
           />
         );
       case "market":
