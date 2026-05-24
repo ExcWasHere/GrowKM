@@ -16,8 +16,6 @@ interface ChatRequestBody {
 }
 
 // POST /api/chat
-// Sends a message to the AI Copilot. Auto-creates a new session if session_id is not provided.
-// Returns the AI response and the session_id so the client can continue the conversation.
 export const handleChat = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
@@ -39,7 +37,6 @@ export const handleChat = async (c: Context<HonoEnv>) => {
 };
 
 // GET /api/chat/sessions
-// Returns all chat sessions belonging to the logged-in user (metadata only, no messages)
 export const handleGetSessions = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
@@ -49,7 +46,6 @@ export const handleGetSessions = async (c: Context<HonoEnv>) => {
 };
 
 // GET /api/chat/sessions/:id
-// Returns a single session with its full message history
 export const handleGetSession = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);
@@ -64,7 +60,6 @@ export const handleGetSession = async (c: Context<HonoEnv>) => {
 };
 
 // DELETE /api/chat/sessions/:id
-// Permanently deletes a chat session and its message history
 export const handleDeleteSession = async (c: Context<HonoEnv>) => {
     const supabase = getAuthClient(c);
     const userId = getUserId(c);

@@ -46,6 +46,35 @@ const listOpportunitiesRoute = createRoute({
     },
 });
 
+const getAdvisorRoute = createRoute({
+    method: 'get',
+    path: '/advisor',
+    tags: ['Opportunities'],
+    summary: 'Get AI Advisor Recommendations',
+    description: [
+        'Returns AI-powered personalized top 3 opportunity recommendations based on user profile and completed steps.',
+        '',
+        'Uses RAG (Retrieval-Augmented Generation) with knowledge base and Azure OpenAI to generate contextual recommendations.',
+        '',
+        'Each recommendation includes:',
+        '- **why_this_fits**: reasoning based on user profile',
+        '- **why_now**: timing/urgency explanation',
+        '- **next_step**: concrete action to take',
+        '- **caveats**: optional notes or warnings',
+        '',
+        'Falls back to deterministic matching if LLM fails.',
+    ].join('\n'),
+    security: [{ BearerAuth: [] }],
+    responses: {
+        200: {
+            description: 'Returns top 3 personalized recommendations with reasoning',
+        },
+        404: {
+            description: 'Business profile not found — complete onboarding first',
+        },
+    },
+});
+
 const getUnlockedRoute = createRoute({
     method: 'get',
     path: '/unlocked',
@@ -124,12 +153,9 @@ const triggerMatchRoute = createRoute({
     },
 });
 
-// ============================================================
-// HANDLERS
-// NOTE: /unlocked must be registered before /:id to avoid path conflict
-// ============================================================
 
 opportunityRoutes.openapi(listOpportunitiesRoute, opportunityController.handleListOpportunities as any);
+opportunityRoutes.openapi(getAdvisorRoute, opportunityController.handleGetAdvisorRecommendations as any);
 opportunityRoutes.openapi(getUnlockedRoute, opportunityController.handleGetUnlocked as any);
 opportunityRoutes.openapi(getOpportunityDetailRoute, opportunityController.handleGetOpportunityDetail as any);
 opportunityRoutes.openapi(triggerMatchRoute, opportunityController.handleTriggerMatch as any);

@@ -14,7 +14,7 @@ if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base_2/opportunities');
+const KNOWLEDGE_BASE_DIR = join(import.meta.dir, '../knowledge_base_2');
 
 interface Chunk {
     domain: string;
@@ -35,7 +35,7 @@ function getMarkdownFiles(dir: string, fileList: string[] = []): string[] {
 }
 
 // Step 2: Split each file into chunks at every ## heading.
-// domain = top-level folder (e.g. 'kbli', 'halal'), category = filename without .md
+// domain = top-level folder (e.g. 'kbli', 'halal', 'opportunities'), category = filename without .md
 function parseMarkdownToChunks(filePath: string): Chunk[] {
     const raw = readFileSync(filePath, 'utf-8');
     const parts = relative(KNOWLEDGE_BASE_DIR, filePath).replace(/\\/g, '/').split('/');

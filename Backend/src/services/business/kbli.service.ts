@@ -1,9 +1,9 @@
-import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../types/database.types';
 import { EnvBindings } from '../../types/env';
 import { embedQuery } from '../ai/embedding.service';
 import { retrieveChunks, RetrievedChunk } from '../ai/retrieval.service';
+import { getOpenAIClient } from '../../config/openai';
 
 const DEPLOYMENT = 'gpt-4.1-mini';
 
@@ -23,14 +23,7 @@ export interface KBLIMatchResult {
     kbli_name: string;
     explanation: string;
     warnings: KBLIWarning[];
-    mismatch_alert: KBLIMismatchAlert | null; 
-}
-
-function getOpenAIClient(env: Partial<EnvBindings>): OpenAI {
-    return new OpenAI({
-        baseURL: env.AZURE_OPENAI_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? '',
-        apiKey: env.AZURE_OPENAI_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? '',
-    });
+    mismatch_alert: KBLIMismatchAlert | null;
 }
 
 function buildSystemPrompt(chunks: RetrievedChunk[], businessType: string): string {

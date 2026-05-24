@@ -102,7 +102,6 @@ const deleteSessionRoute = createRoute({
     },
 });
 
-// ─── Handlers ────────────────────────────────────────────────────────────────
 
 chatRoutes.openapi(chatRoute, chatController.handleChat as any);
 chatRoutes.openapi(getSessionsRoute, chatController.handleGetSessions);

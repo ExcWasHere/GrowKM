@@ -40,7 +40,7 @@ const registerRoute = createRoute({
                 'application/json': {
                     schema: z.object({
                         email: z.string().email().openapi({ example: 'umkm.baru2@gmail.com' }),
-                        password: z.string().min(6).openapi({ example: 'password123' }),
+                        password: z.string().min(6).openapi({ example: 'password12345678' }),
                         data: z.object({
                             name: z.string().openapi({ example: 'Toko Kue Ibu Budi' })
                         }).openapi('RegisterMetadata')

@@ -167,7 +167,7 @@ const confirmKbliRoute = createRoute({
     },
 });
 
-// Handlers
+
 userRoutes.openapi(getMeRoute, userController.handleGetMe);
 userRoutes.openapi(upsertBusinessProfileRoute, userController.handleUpsertBusinessProfile);
 userRoutes.openapi(recommendKBLIRoute, userController.handleRecommendKBLI);

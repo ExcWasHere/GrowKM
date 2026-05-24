@@ -8,27 +8,21 @@ import { ChatMessage } from '../../repositories/chat.repository';
 import * as userRepository from '../../repositories/user.repository';
 import { embedQuery } from '../ai/embedding.service';
 import { retrieveChunks, RetrievedChunk } from '../ai/retrieval.service';
+import { getOpenAIClient } from '../../config/openai';
 
 type StepType = Database['public']['Enums']['step_type_enum'];
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
 
 const DEPLOYMENT = 'gpt-4.1-mini';
-const MAX_HISTORY_MESSAGES = 10; 
+const MAX_HISTORY_MESSAGES = 10;
 
-const TITLE_DEPLOYMENT = 'gpt-4.1-mini'; 
+const TITLE_DEPLOYMENT = 'gpt-4.1-mini';
 
 export interface ChatResult {
     session_id: string;
     user_message: string;
     ai_response: string;
     sources_used: number;
-}
-
-function getOpenAIClient(env: Partial<EnvBindings>): OpenAI {
-    return new OpenAI({
-        baseURL: env.AZURE_OPENAI_ENDPOINT ?? process.env.AZURE_OPENAI_ENDPOINT ?? '',
-        apiKey: env.AZURE_OPENAI_API_KEY ?? process.env.AZURE_OPENAI_API_KEY ?? '',
-    });
 }
 
 function buildSystemPrompt(

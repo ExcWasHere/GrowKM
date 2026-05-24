@@ -2,7 +2,7 @@
 
 Daftar peluang nyata yang terbuka setelah UMKM menyelesaikan langkah-langkah formalisasi. Setiap peluang mencantumkan syarat legalitas minimum, cara daftar, dan sumber resmi.
 
-## KUR Super Mikro — Pinjaman Modal Tanpa Agunan untuk Pemula
+## KUR Super Mikro
 
 KUR Super Mikro adalah pembiayaan modal kerja atau investasi dari pemerintah yang dirancang khusus untuk usaha yang baru mulai atau masih ultra mikro. Ini adalah opsi pinjaman paling mudah diakses karena tidak ada syarat agunan dan tidak ada syarat minimal lama usaha.
 
@@ -25,7 +25,7 @@ KUR Super Mikro adalah pembiayaan modal kerja atau investasi dari pemerintah yan
 
 ---
 
-## KUR Mikro — Pinjaman hingga Rp 100 Juta untuk UMKM yang Sudah Berjalan
+## KUR Mikro
 
 KUR Mikro adalah pinjaman modal kerja atau investasi untuk UMKM yang sudah berjalan minimal 6 bulan dan membutuhkan modal lebih besar. Tidak ada agunan untuk pinjaman di bawah Rp 100 juta.
 
@@ -51,7 +51,7 @@ KUR Mikro adalah pinjaman modal kerja atau investasi untuk UMKM yang sudah berja
 
 ---
 
-## Program SEHATI 2026 — Sertifikasi Halal Gratis untuk Usaha Mikro
+## Program SEHATI 2026 — Sertifikasi Halal Gratis
 
 SEHATI (Sertifikasi Halal Gratis) adalah program BPJPH yang memungkinkan usaha mikro dan kecil mendapatkan sertifikat halal 100% gratis melalui mekanisme self-declare (pernyataan mandiri). Di jalur reguler, biaya sertifikasi halal berkisar Rp 650 ribu hingga Rp 4 juta.
 
@@ -84,7 +84,7 @@ SEHATI (Sertifikasi Halal Gratis) adalah program BPJPH yang memungkinkan usaha m
 
 ---
 
-## Mitra GrabFood Merchant — Jual Makanan di 258+ Kota
+## Mitra GrabFood Merchant
 
 GrabFood adalah platform pesan-antar makanan dari Grab. Bergabung sebagai merchant GrabFood memungkinkan usaha kuliner menerima pesanan dari pelanggan di seluruh Indonesia, termasuk usaha rumahan.
 
@@ -109,7 +109,7 @@ GrabFood adalah platform pesan-antar makanan dari Grab. Bergabung sebagai mercha
 
 ---
 
-## Mitra GoFood Merchant via GoBiz — Platform Gojek
+## Mitra GoFood Merchant via GoBiz
 
 GoFood adalah platform pesan-antar makanan dari Gojek dengan lebih dari 1 juta merchant terdaftar. Usaha rumahan diperbolehkan mendaftar. Pendaftaran gratis tanpa biaya awal.
 
@@ -162,7 +162,7 @@ Smesco Indonesia (LLP-KUKM) di bawah Kementerian Koperasi dan UKM adalah ekosist
 
 ---
 
-## Pendaftaran Merek di DJKI — Tarif Khusus UMK Rp 500.000
+## Pendaftaran Merek di DJKI — Tarif Khusus UMK
 
 Mendaftarkan merek (nama usaha, logo, atau slogan) di DJKI (Direktorat Jenderal Kekayaan Intelektual) memberikan perlindungan hukum selama 10 tahun dan bisa diperpanjang. Tanpa pendaftaran merek, siapa pun bisa mendaftarkan nama usahamu terlebih dahulu dan kamu tidak bisa menuntut secara hukum.
 
@@ -190,7 +190,7 @@ Mendaftarkan merek (nama usaha, logo, atau slogan) di DJKI (Direktorat Jenderal 
 
 ---
 
-## QRIS — Terima Semua Pembayaran Digital, MDR 0% untuk Usaha Mikro
+## QRIS — Terima Semua Pembayaran Digital
 
 QRIS (Quick Response Code Indonesian Standard) adalah standar kode QR nasional dari Bank Indonesia yang memungkinkan UMKM menerima pembayaran dari semua e-wallet dan mobile banking (GoPay, OVO, Dana, ShopeePay, BCA, BRI, Mandiri, dll.) hanya dengan satu QR code.
 
@@ -220,7 +220,7 @@ QRIS (Quick Response Code Indonesian Standard) adalah standar kode QR nasional d
 
 ---
 
-## Seller Tokopedia — dari Toko Biasa hingga Official Store
+## Seller Tokopedia — hingga Official Store
 
 Tokopedia adalah salah satu marketplace terbesar di Indonesia. UMKM bisa memulai sebagai seller biasa tanpa syarat khusus, lalu berkembang ke Power Merchant dan Official Store seiring pertumbuhan usaha.
 
@@ -249,7 +249,7 @@ Tokopedia adalah salah satu marketplace terbesar di Indonesia. UMKM bisa memulai
 
 ---
 
-## Supplier Indomaret untuk Produk UMKM
+## Supplier Produk UMKM di Indomaret
 
 Indomaret menyediakan rak khusus untuk produk UMKM di gerainya, bekerja sama dengan pemerintah daerah di berbagai wilayah. Ini adalah jalur masuk ke jaringan ritel modern yang sangat menguntungkan jika berhasil.
 
@@ -269,7 +269,7 @@ Indomaret menyediakan rak khusus untuk produk UMKM di gerainya, bekerja sama den
 
 ---
 
-## Seller Shopee — dari Toko Biasa hingga Shopee Mall
+## Seller Shopee — hingga Shopee Mall
 
 Shopee adalah marketplace dengan jumlah pengguna aktif terbesar di Indonesia. UMKM bisa membuka toko biasa tanpa syarat khusus, lalu berkembang ke Star Seller dan Shopee Mall.
 
