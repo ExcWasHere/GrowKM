@@ -1,6 +1,16 @@
 import type { FormalizationStep, UserProfile, BusinessProfile, BusinessLevel } from "./types";
 import type { Page } from "./types";
 
+export const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  kuliner:            "Kuliner & F&B",
+  fashion_craft:      "Fashion & Kerajinan",
+  jasa_personal_care: "Jasa & Personal Care",
+  lainnya:            "Lainnya",
+};
+
+export const formatBusinessType = (type: string): string =>
+  BUSINESS_TYPE_LABELS[type] ?? type;
+
 export const SAMPLE_USER: UserProfile = {
   id: "",
   email: "demo@example.com",
