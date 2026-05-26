@@ -78,7 +78,7 @@ export default function Footer() {
 
         <div className="pt-7 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-gray-300">
-            © {currentYear} GrowKM. Dibuat untuk UMKM Indonesia.
+            © {currentYear} GrowKM. All rights reserved.
           </p>
           <div className="flex gap-5">
             <Link
