@@ -5,14 +5,9 @@ import type {
   BusinessProfile,
   RoadmapStep,
   StepType,
-  StepStatus,
 } from "../components/Dashboard/types";
 
-// ─── Re-export BusinessProfile so existing imports don't break ────────────────
 export type { BusinessProfile };
-
-// ─── Re-export enriched step type (UI layer) ─────────────────────────────────
-
 export interface RoadmapStepEnriched extends RoadmapStep {
   label: string;
   description: string;
@@ -21,8 +16,6 @@ export interface RoadmapStepEnriched extends RoadmapStep {
   platform: string;
   icon: string;
 }
-
-// ─── Local default ────────────────────────────────────────────────────────────
 
 const DEFAULT_BUSINESS: BusinessProfile = {
   id: "",
@@ -49,8 +42,6 @@ const DEFAULT_BUSINESS: BusinessProfile = {
   created_at: "",
   updated_at: "",
 };
-
-// ─── Step metadata (UI enrichment) ───────────────────────────────────────────
 
 const STEP_META: Record<
   StepType,
@@ -115,8 +106,6 @@ function enrichStep(raw: RoadmapStep): RoadmapStepEnriched {
   return { ...raw, ...meta };
 }
 
-// ─── localStorage helpers ─────────────────────────────────────────────────────
-
 function getNameFromLocalStorage(): string {
   try {
     const raw = localStorage.getItem("user");
@@ -144,8 +133,6 @@ function getEmailFromLocalStorage(): string {
   }
 }
 
-// ─── API response shapes ──────────────────────────────────────────────────────
-
 interface GetMeResponse {
   status: string;
   message: string;
@@ -170,12 +157,7 @@ interface RoadmapStatusResponse {
   };
 }
 
-// ─── Load / save state ────────────────────────────────────────────────────────
-
 export type ProfileLoadState = "idle" | "loading" | "success" | "error";
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useUserProfile() {
   const [authName, setAuthName] = useState<string>(getNameFromLocalStorage);
   const [authEmail, setAuthEmail] = useState<string>(getEmailFromLocalStorage);
@@ -186,9 +168,6 @@ export function useUserProfile() {
   const [loadState, setLoadState] = useState<ProfileLoadState>("idle");
   const [saveState, setSaveState] = useState<ProfileLoadState>("idle");
   const [error, setError] = useState<string | null>(null);
-
-  // ── Fetch ──────────────────────────────────────────────────────────────────
-
   const fetchAll = useCallback(async () => {
     setLoadState("loading");
     setError(null);
@@ -219,7 +198,7 @@ export function useUserProfile() {
         setRoadmapProgress(0);
       }
 
-      setLoadState("success"); // ← fix: dipindah ke luar blok if/else
+      setLoadState("success");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal memuat profil";
       setError(msg);
@@ -231,8 +210,6 @@ export function useUserProfile() {
     fetchAll();
   }, [fetchAll]);
 
-  // ── Derived UserProfile (buat di-pass ke komponen) ─────────────────────────
-
   const userProfile: UserProfile = {
     id: businessProfile.user_id,
     email: authEmail,
@@ -241,8 +218,6 @@ export function useUserProfile() {
     business_profile: businessProfile.id ? businessProfile : null,
     roadmap: roadmapSteps,
   };
-
-  // ── Update business profile ────────────────────────────────────────────────
 
   const updateBusinessProfile = useCallback(
     async (updates: Partial<BusinessProfile>): Promise<void> => {
@@ -282,7 +257,7 @@ export function useUserProfile() {
 
         setSaveState("success");
       } catch (err) {
-        setBusinessProfile(prev); // rollback
+        setBusinessProfile(prev);
         const msg =
           err instanceof Error ? err.message : "Gagal menyimpan profil";
         setError(msg);
@@ -292,8 +267,6 @@ export function useUserProfile() {
     },
     [businessProfile],
   );
-
-  // ── Update roadmap step status ─────────────────────────────────────────────
 
   const updateStepStatus = useCallback(
     async (stepType: StepType, status: "in_progress" | "completed") => {

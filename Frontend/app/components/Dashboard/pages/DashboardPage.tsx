@@ -1,17 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Award,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  X,
-  ZoomIn,
+  Award, Check, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  CheckCircle, X, ZoomIn,
 } from "lucide-react";
 import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
-import { getBadges, LEVEL_CONFIG } from "../../Dashboard/constants";
+import { getBadges, LEVEL_CONFIG, formatBusinessType } from "../../Dashboard/constants";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
 
 interface DashboardPageProps {
@@ -41,7 +34,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
-      {/* Main Content */}
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
         {/* Level/Progress Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
@@ -52,7 +44,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {levelCfg.label}
               </h3>
               <p className="text-xs text-gray-500">
-                {businessProfile.business_type} • {businessProfile.city}
+                {/* ✅ FIX */}
+                {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
               </p>
             </div>
             <div className="text-right">
@@ -120,7 +113,8 @@ const ProfileCard: React.FC<{
         {businessProfile.business_name}
       </p>
       <p className="text-gray-400 text-xs font-medium mb-4 md:mb-6">
-        {businessProfile.business_type} • {businessProfile.city}
+        {/* ✅ FIX */}
+        {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
       </p>
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 py-3 md:py-4 rounded-lg border border-amber-100">
         <p className="text-[9px] uppercase font-bold text-amber-500 mb-1">
@@ -187,14 +181,12 @@ const BadgesCard: React.FC<{
 };
 
 const CERT_LIST = [
-  { key: "has_nib",   label: "NIB",          desc: "Nomor Induk Berusaha"      },
-  { key: "has_pirt",  label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga" },
-  { key: "has_halal", label: "Halal",         desc: "Sertifikat Halal MUI / BPJPH" },
-  { key: "has_bpom",  label: "BPOM",          desc: "Izin edar BPOM"           },
-  { key: "has_merek", label: "Merek",         desc: "Pendaftaran merek DJKI"   },
+  { key: "has_nib",   label: "NIB",            desc: "Nomor Induk Berusaha"          },
+  { key: "has_pirt",  label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga"      },
+  { key: "has_halal", label: "Halal",           desc: "Sertifikat Halal MUI / BPJPH" },
+  { key: "has_bpom",  label: "BPOM",            desc: "Izin edar BPOM"               },
+  { key: "has_merek", label: "Merek",           desc: "Pendaftaran merek DJKI"        },
 ] as const;
-
-type CertKey = (typeof CERT_LIST)[number]["key"];
 
 interface FormalizationSliderProps {
   businessProfile: BusinessProfile;
@@ -230,7 +222,6 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
       ref={containerRef}
       className={`bg-white rounded-xl p-4 md:p-5 border border-amber-200 shadow-sm ${className}`}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
           <CheckCircle size={14} className="text-green-500" />
@@ -241,7 +232,6 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
         </span>
       </div>
 
-      {/* Grid */}
       <div
         className="grid gap-3 mb-4"
         style={{ gridTemplateColumns: `repeat(${perPage}, minmax(0, 1fr))` }}
@@ -276,7 +266,6 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
         })}
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5 items-center">
           {Array.from({ length: totalPages }).map((_, i) => (
