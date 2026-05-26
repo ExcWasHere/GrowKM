@@ -105,7 +105,7 @@ const team: TeamMember[] = [
 interface Value { icon: LucideIcon; title: string; desc: string; }
 const values: Value[] = [
   { icon: Target, title: "Berpihak pada UMKM",      desc: "Setiap fitur kami dirancang dari sudut pandang pelaku UMKM, bukan birokrat atau konsultan." },
-  { icon: Zap,    title: "Simpel, bukan sederhana", desc: "Regulasi memang rumit — tapi cara menyampaikannya bisa dibuat lebih manusiawi." },
+  { icon: Zap,    title: "Simpel, bukan sederhana", desc: "Regulasi memang rumit tapi cara menyampaikannya bisa dibuat lebih manusiawi." },
   { icon: Heart,  title: "Berbasis regulasi resmi", desc: "Setiap panduan dan rekomendasi bersumber dari regulasi resmi pemerintah Indonesia." },
   { icon: Globe,  title: "Membangun ekosistem",     desc: "Kami percaya UMKM yang formal adalah pondasi ekonomi Indonesia yang kuat." },
 ];
@@ -200,7 +200,7 @@ export default function AboutUs() {
                   <div className="text-5xl md:text-7xl font-extrabold text-orange-500 leading-none mb-3">64</div>
                   <div className="text-base font-semibold text-gray-700 mb-2">juta UMKM di Indonesia</div>
                   <div className="text-sm text-gray-500 leading-relaxed">
-                    berkontribusi pada 61% PDB nasional — namun hanya sebagian kecil yang sudah memiliki legalitas lengkap.
+                    berkontribusi pada 61% PDB nasional namun hanya sebagian kecil yang sudah memiliki legalitas lengkap.
                   </div>
                   <div className="mt-6 pt-6 border-t border-orange-200">
                     <div className="flex items-center gap-2 text-sm text-orange-600 font-semibold">
@@ -221,7 +221,7 @@ export default function AboutUs() {
                   Berawal dari pertanyaan sederhana di warung kopi
                 </h2>
                 <p className="text-gray-500 leading-relaxed">
-                  Tahun 2023, tim kami turun langsung ke lapangan — berbicara dengan ratusan pemilik warung makan,
+                  Tahun 2023, tim kami turun langsung ke lapangan, berbicara dengan ratusan pemilik warung makan,
                   pengrajin batik, dan penjahit rumahan. Satu keluhan yang selalu muncul:{" "}
                   <em className="text-gray-700 not-italic font-medium">"Mau urus izin, tapi tidak tahu harus mulai dari mana."</em>
                 </p>
