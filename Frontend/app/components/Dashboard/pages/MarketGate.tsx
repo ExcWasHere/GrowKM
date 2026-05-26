@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { UserProfile, BusinessProfile } from "../../Dashboard/types";
 import { apiFetch } from "../../../lib/api";
+import { AdvisorSection } from "../../../common/dashboard/AdvisorSection";
 
 type MatchStatus = "eligible" | "almost" | "locked";
 type OpportunityCategory =
@@ -841,6 +842,7 @@ export const MarketPage: React.FC<MarketPageProps> = () => {
         retriggerLoading={retriggerLoading}
       />
       <NewlyUnlockedSection />
+      <AdvisorSection />
       <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-4 md:p-5">
         <div className="flex items-center gap-2 mb-4">
           <Filter size={14} className="text-amber-500" />
