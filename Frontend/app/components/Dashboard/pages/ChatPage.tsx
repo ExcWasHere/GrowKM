@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import ReactDOM from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -157,6 +158,8 @@ const AssistantMarkdown: React.FC<{ content: string }> = ({ content }) => (
   </ReactMarkdown>
 );
 
+// ─── Delete Confirm Modal (rendered via portal to avoid clipping) ────────────
+
 interface DeleteConfirmProps {
   onConfirm: () => void;
   onCancel: () => void;
@@ -165,41 +168,67 @@ interface DeleteConfirmProps {
 const DeleteConfirmModal: React.FC<DeleteConfirmProps> = ({
   onConfirm,
   onCancel,
-}) => (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
-  >
+}) => {
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onCancel]);
+
+  return ReactDOM.createPortal(
     <div
-      className="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full flex flex-col items-center gap-4 animate-in"
-      style={{ animation: "popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both" }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" }}
+      onClick={onCancel}
     >
-      <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-        <AlertTriangle size={22} className="text-red-500" />
-      </div>
-      <div className="text-center">
-        <p className="font-bold text-gray-800 text-sm">Hapus sesi ini?</p>
-        <p className="text-gray-500 text-xs mt-1">
-          Riwayat percakapan ini akan dihapus permanen.
-        </p>
-      </div>
-      <div className="flex gap-2 w-full">
-        <button
-          onClick={onCancel}
-          className="flex-1 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full flex flex-col items-center gap-4"
+        style={{ animation: "popIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon */}
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center"
+          style={{ animation: "shakeIcon 0.4s ease 0.2s both" }}
         >
-          Batal
-        </button>
-        <button
-          onClick={onConfirm}
-          className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
-        >
-          Hapus
-        </button>
+          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+            <AlertTriangle size={24} className="text-red-500" />
+          </div>
+        </div>
+
+        {/* Text */}
+        <div className="text-center">
+          <p className="font-bold text-gray-800 text-sm">Hapus sesi ini?</p>
+          <p className="text-gray-500 text-xs mt-1 leading-relaxed">
+            Riwayat percakapan ini akan dihapus permanen dan tidak bisa dikembalikan.
+          </p>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-2 w-full">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 active:scale-95 transition-all shadow-md shadow-red-200"
+          >
+            Hapus
+          </button>
+        </div>
       </div>
-    </div>
-  </div>
-);
+    </div>,
+    document.body
+  );
+};
+
+// ─── Session Item ─────────────────────────────────────────────────────────────
 
 interface SessionItemProps {
   session: ChatSession;
@@ -215,59 +244,80 @@ const SessionItem: React.FC<SessionItemProps> = ({
   onDelete,
 }) => {
   const [showDelete, setShowDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = () => {
+    setShowDelete(false);
+    setIsDeleting(true);
+    // tunggu animasi exit selesai baru hapus dari list
+    setTimeout(() => {
+      onDelete();
+    }, 350);
+  };
 
   return (
-    <div
-      className={`group relative flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${
-        isActive
-          ? "bg-amber-50 border border-amber-200"
-          : "hover:bg-gray-50 border border-transparent"
-      }`}
-      onClick={onSelect}
-    >
+    <>
       <div
-        className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+        className={`group relative flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all duration-300 ${
+          isDeleting
+            ? "opacity-0 -translate-x-4 scale-95 pointer-events-none"
+            : "opacity-100 translate-x-0 scale-100"
+        } ${
           isActive
-            ? "bg-gradient-to-br from-amber-400 to-orange-500"
-            : "bg-gray-100"
+            ? "bg-amber-50 border border-amber-200"
+            : "hover:bg-gray-50 border border-transparent"
         }`}
+        onClick={!isDeleting ? onSelect : undefined}
       >
-        <MessageSquare
-          size={13}
-          className={isActive ? "text-white" : "text-gray-400"}
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-xs font-semibold truncate ${isActive ? "text-amber-800" : "text-gray-700"}`}
+        <div
+          className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+            isActive
+              ? "bg-gradient-to-br from-amber-400 to-orange-500"
+              : "bg-gray-100"
+          }`}
         >
-          {getSessionPreview(session)}
-        </p>
-        <p className="text-[10px] text-gray-400 mt-0.5">
-          {formatRelativeTime(session.updated_at)}
-        </p>
+          <MessageSquare
+            size={13}
+            className={isActive ? "text-white" : "text-gray-400"}
+          />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-xs font-semibold truncate ${
+              isActive ? "text-amber-800" : "text-gray-700"
+            }`}
+          >
+            {getSessionPreview(session)}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {formatRelativeTime(session.updated_at)}
+          </p>
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDelete(true);
+          }}
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
+        >
+          <Trash2 size={12} />
+        </button>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowDelete(true);
-        }}
-        className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
-      >
-        <Trash2 size={12} />
-      </button>
+
+      {/* Portal modal — rendered outside SessionItem to avoid clipping */}
       {showDelete && (
         <DeleteConfirmModal
-          onConfirm={() => {
-            setShowDelete(false);
-            onDelete();
-          }}
+          onConfirm={handleConfirmDelete}
           onCancel={() => setShowDelete(false)}
         />
       )}
-    </div>
+    </>
   );
 };
+
+// ─── Chat Page ────────────────────────────────────────────────────────────────
 
 export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -275,7 +325,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
       role: "assistant",
       content: initialContext
         ? `Halo ${user.name}! 👋 Saya siap bantu kamu soal **${initialContext}**. Apa yang ingin kamu ketahui?`
-        : `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.businessName}** ya!`,
+        : `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.business_profile?.business_name ?? "usahamu"}** ya!`,
     },
   ]);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -347,7 +397,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     setMessages([
       {
         role: "assistant",
-        content: `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.businessName}** ya!`,
+        content: `Halo **${user.name}**! 👋 Saya **Lexa**, asisten perizinan usahamu. Tanya apa saja soal proses perizinan dan formalisasi usaha **${user.business_profile?.business_name ?? "usahamu"}** ya!`,
       },
     ]);
     setSidebarOpen(false);
@@ -426,8 +476,16 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
     <>
       <style>{`
         @keyframes popIn {
-          from { opacity: 0; transform: scale(0.85) translateY(8px); }
+          from { opacity: 0; transform: scale(0.8) translateY(12px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes shakeIcon {
+          0%   { transform: rotate(0deg); }
+          20%  { transform: rotate(-8deg); }
+          40%  { transform: rotate(8deg); }
+          60%  { transform: rotate(-5deg); }
+          80%  { transform: rotate(4deg); }
+          100% { transform: rotate(0deg); }
         }
         @keyframes slideInLeft {
           from { opacity: 0; transform: translateX(-16px); }
@@ -457,7 +515,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
         .typing-dot:nth-child(2) { animation-delay: 0.15s; }
         .typing-dot:nth-child(3) { animation-delay: 0.3s; }
 
-        /* Override li bullet untuk ordered list — gunakan counter bawaan */
         ol .flex { display: list-item; list-style: decimal; margin-left: 1rem; }
         ol .flex span.rounded-full { display: none; }
       `}</style>
@@ -612,7 +669,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                     : "flex-row msg-assistant"
                 }`}
               >
-                {/* Avatar */}
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                     msg.role === "assistant"
@@ -627,7 +683,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
                   )}
                 </div>
 
-                {/* Bubble */}
                 <div
                   className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === "assistant"
@@ -644,7 +699,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
               </div>
             ))}
 
-            {/* Typing indicator */}
             {loading && (
               <div className="flex gap-3 msg-assistant">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md shadow-amber-200 flex items-center justify-center shrink-0">

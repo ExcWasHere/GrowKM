@@ -8,6 +8,7 @@ import {
   RefreshCw,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   TrendingUp,
   AlertCircle,
   Loader2,
@@ -105,6 +106,7 @@ interface MarketPageProps {
 }
 
 type FilterType = "all" | MatchStatus;
+
 const CATEGORY_META: Record<
   OpportunityCategory,
   { label: string; icon: React.ReactNode; color: string; bg: string }
@@ -281,9 +283,16 @@ const OpportunityCard: React.FC<{
   opp: Opportunity;
   onViewDetail: (id: string) => void;
 }> = ({ opp, onViewDetail }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const status = opp.match_status ?? "locked";
   const sm = STATUS_META[status];
   const cm = CATEGORY_META[opp.category] ?? CATEGORY_META.program_pemerintah;
+
+  const hasExpandableContent =
+    (opp.required_steps?.length > 0) ||
+    (status === "almost" && opp.missing_steps && opp.missing_steps.length > 0) ||
+    !!opp.deadline;
 
   return (
     <div
@@ -301,7 +310,7 @@ const OpportunityCard: React.FC<{
       />
 
       <div className="p-4">
-        {/* Header */}
+        {/* Header — always visible */}
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -341,7 +350,7 @@ const OpportunityCard: React.FC<{
           </div>
         </div>
 
-        {/* Estimated value */}
+        {/* Estimated value — always visible */}
         {opp.estimated_value && (
           <div className={`flex items-center gap-1.5 mb-3 ${status === "locked" ? "opacity-50" : ""}`}>
             <Star size={12} className="text-amber-400" />
@@ -349,58 +358,77 @@ const OpportunityCard: React.FC<{
           </div>
         )}
 
-        {/* Required steps */}
-        {opp.required_steps?.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1.5">
-              Syarat
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {opp.required_steps.map((req) => {
-                const isMissing = opp.missing_steps?.includes(req);
-                return (
-                  <span
-                    key={req}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                      isMissing
-                        ? "bg-red-50 border-red-200 text-red-600"
-                        : "bg-green-50 border-green-200 text-green-700"
-                    }`}
-                  >
-                    {isMissing ? "❌" : "✅"} {STEP_LABEL[req] ?? req}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
+        {/* Dropdown toggle — only if there's expandable content */}
+        {hasExpandableContent && (
+          <button
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-amber-500 transition-colors mb-3"
+          >
+            <ChevronDown
+              size={13}
+              className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+            />
+            {isExpanded ? "Sembunyikan detail" : "Lihat detail syarat"}
+          </button>
         )}
 
-        {/* Almost hint */}
-        {status === "almost" && opp.missing_steps && opp.missing_steps.length > 0 && (
-          <div className="mb-3 flex items-start gap-2 bg-amber-50 rounded-lg p-2.5 border border-amber-100">
-            <AlertCircle size={12} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-800 font-medium">
-              Selesaikan{" "}
-              <span className="font-bold">
-                {opp.missing_steps.map((s) => STEP_LABEL[s] ?? s).join(", ")}
-              </span>{" "}
-              untuk unlock peluang ini
-            </p>
-          </div>
-        )}
+        {/* Expandable content */}
+        {isExpanded && (
+          <div className="mb-3 space-y-3">
+            {/* Required steps */}
+            {opp.required_steps?.length > 0 && (
+              <div>
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1.5">
+                  Syarat
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {opp.required_steps.map((req) => {
+                    const isMissing = opp.missing_steps?.includes(req);
+                    return (
+                      <span
+                        key={req}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                          isMissing
+                            ? "bg-red-50 border-red-200 text-red-600"
+                            : "bg-green-50 border-green-200 text-green-700"
+                        }`}
+                      >
+                        {isMissing ? "❌" : "✅"} {STEP_LABEL[req] ?? req}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-        {/* Deadline */}
-        {opp.deadline && (
-          <div className="flex items-center gap-1.5 mb-3">
-            <CalendarDays size={12} className="text-gray-400" />
-            <span className="text-[10px] text-gray-500">
-              Deadline:{" "}
-              {new Date(opp.deadline).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
+            {/* Almost hint */}
+            {status === "almost" && opp.missing_steps && opp.missing_steps.length > 0 && (
+              <div className="flex items-start gap-2 bg-amber-50 rounded-lg p-2.5 border border-amber-100">
+                <AlertCircle size={12} className="text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-800 font-medium">
+                  Selesaikan{" "}
+                  <span className="font-bold">
+                    {opp.missing_steps.map((s) => STEP_LABEL[s] ?? s).join(", ")}
+                  </span>{" "}
+                  untuk unlock peluang ini
+                </p>
+              </div>
+            )}
+
+            {/* Deadline */}
+            {opp.deadline && (
+              <div className="flex items-center gap-1.5">
+                <CalendarDays size={12} className="text-gray-400" />
+                <span className="text-[10px] text-gray-500">
+                  Deadline:{" "}
+                  {new Date(opp.deadline).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -480,7 +508,6 @@ const OpportunityDetailContent: React.FC<{ opp: Opportunity }> = ({ opp }) => {
         <p className="text-sm text-gray-600 mb-4 leading-relaxed">{opp.description}</p>
       )}
 
-      {/* Info locked */}
       {status === "locked" && opp.missing_steps && opp.missing_steps.length > 0 && (
         <div className="mb-4 flex items-start gap-2 bg-gray-50 rounded-xl p-3 border border-gray-200">
           <Lock size={14} className="text-gray-400 shrink-0 mt-0.5" />
@@ -635,9 +662,11 @@ const OpportunityDetailModal: React.FC<{
   );
 };
 
+// ─── NewlyUnlockedSection WITH DROPDOWN ────────────────────────────────────
 const NewlyUnlockedSection: React.FC = () => {
   const [unlocked, setUnlocked] = useState<UnlockedOpportunity[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // ← dropdown state
 
   useEffect(() => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -654,37 +683,60 @@ const NewlyUnlockedSection: React.FC = () => {
   if (!loaded || unlocked.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 shadow-sm p-4 md:p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <Zap size={16} className="text-amber-500" />
-        <p className="text-xs font-bold text-amber-800 uppercase tracking-wider">
-          🎉 Baru Ter-unlock!
-        </p>
-      </div>
-      <p className="text-[11px] text-amber-700 mb-3">
-        Izinmu yang baru membuka <strong>{unlocked.length} peluang baru</strong>. Selamat!
-      </p>
-      <div className="w-full overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {unlocked.map((opp) => (
-            <div
-              key={opp.id}
-              className="shrink-0 bg-white rounded-xl border border-amber-200 p-3 w-48 shadow-sm"
-            >
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle size={11} className="text-green-500" />
-                </div>
-                <p className="text-[10px] font-bold text-green-700">Baru unlock</p>
-              </div>
-              <p className="text-xs font-bold text-gray-800 leading-snug">{opp.title}</p>
-              {opp.estimated_value && (
-                <p className="text-[10px] text-amber-600 font-bold mt-1">{opp.estimated_value}</p>
-              )}
-            </div>
-          ))}
+    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 shadow-sm overflow-hidden">
+      {/* ── Header / Toggle button ── */}
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between p-4 md:p-5 hover:bg-amber-50/60 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Zap size={16} className="text-amber-500 shrink-0" />
+          <div className="text-left">
+            <p className="text-xs font-bold text-amber-800 uppercase tracking-wider">
+              Baru Ter-unlock!
+            </p>
+            <p className="text-[11px] text-amber-600 mt-0.5">
+              <span className="font-bold">{unlocked.length} peluang baru</span> berhasil dibuka 🎉
+            </p>
+          </div>
         </div>
-      </div>
+
+        {/* Badge count + chevron */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="w-6 h-6 rounded-full bg-amber-400 text-white text-[10px] font-black flex items-center justify-center">
+            {unlocked.length}
+          </span>
+          <ChevronDown
+            size={15}
+            className={`text-amber-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          />
+        </div>
+      </button>
+
+      {/* ── Collapsible content ── */}
+      {isOpen && (
+        <div className="px-4 pb-4 md:px-5 md:pb-5 border-t border-amber-200/60">
+          <div className="grid grid-cols-1 gap-2 mt-3">
+            {unlocked.map((opp) => (
+              <div
+                key={opp.id}
+                className="bg-white rounded-xl border border-amber-200 p-3 shadow-sm"
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle size={11} className="text-green-500" />
+                  </div>
+                  <p className="text-[10px] font-bold text-green-700">Baru unlock</p>
+                </div>
+                <p className="text-xs font-bold text-gray-800 leading-snug">{opp.title}</p>
+                {opp.estimated_value && (
+                  <p className="text-[10px] text-amber-600 font-bold mt-1">{opp.estimated_value}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -794,9 +846,7 @@ export const MarketPage: React.FC<MarketPageProps> = () => {
           <Filter size={14} className="text-amber-500" />
           <p className="text-xs font-bold text-gray-700 uppercase tracking-wider">Feed Peluang</p>
         </div>
-
         <FilterBar active={filter} counts={counts} onChange={setFilter} />
-
         <div className="mt-4">
           {filtered.length === 0 ? (
             <div className="text-center py-10">

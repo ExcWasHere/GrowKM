@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
 import { CARD_META } from "../../../common/dashboard/featureMeta";
-import type { RoadmapStep } from "../../../hooks/useUserProfile";
+import type { RoadmapStepEnriched } from "../../../hooks/useUserProfile";
 
 interface RoadmapPageProps {
   user: UserProfile;
-  steps: RoadmapStep[];
+  steps: RoadmapStepEnriched[];
   progressPercent: number;
   loadState: "idle" | "loading" | "success" | "error";
   error: string | null;
@@ -102,7 +102,7 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
               Guide to Grow
             </h1>
             <p className="text-sm md:text-base text-gray-600 mb-4">
-              Kuliner • {user.businessName || "Usaha Saya"}
+              Kuliner • {user.business_profile?.business_name ?? "Usaha Saya"}
             </p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs md:text-sm">
