@@ -4,6 +4,7 @@ import documentRoutes from './document.routes';
 import authRoutes from './auth.routes';
 import chatRoutes from './chat.routes';
 import opportunityRoutes from './opportunity.routes';
+import financeRoutes from './finance.routes';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { HonoEnv } from '../types/env';
 
@@ -18,6 +19,6 @@ router.route('/users', userRoutes);
 router.route('/users', documentRoutes);
 router.route('/chat', chatRoutes);
 router.route('/opportunities', opportunityRoutes);
-
+router.route('/finance', financeRoutes);
 
 export default router;

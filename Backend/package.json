@@ -11,6 +11,7 @@
     "@supabase/supabase-js": "^2.104.1",
     "hono": "^4.12.15",
     "openai": "^6.34.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -16,7 +16,7 @@ const loginRoute = createRoute({
                 'application/json': {
                     schema: z.object({
                         email: z.string().email().openapi({ example: 'umkm.baru2@gmail.com' }),
-                        password: z.string().min(6).openapi({ example: 'password123' }),
+                        password: z.string().min(6).openapi({ example: 'password12345678' }),
                     }).openapi('LoginInput')
                 }
             }
@@ -28,32 +28,8 @@ const loginRoute = createRoute({
     }
 });
 
-const registerRoute = createRoute({
-    method: 'post',
-    path: '/register',
-    tags: ['Auth'],
-    summary: 'Register (Proxy to Supabase)',
-    description: 'Endpoint proxy untuk registrasi user baru. Termasuk data `name` untuk tabel users.',
-    request: {
-        body: {
-            content: {
-                'application/json': {
-                    schema: z.object({
-                        email: z.string().email().openapi({ example: 'umkm.baru2@gmail.com' }),
-                        password: z.string().min(6).openapi({ example: 'password12345678' }),
-                        data: z.object({
-                            name: z.string().openapi({ example: 'Toko Kue Ibu Budi' })
-                        }).openapi('RegisterMetadata')
-                    }).openapi('RegisterInput')
-                }
-            }
-        }
-    },
-    responses: {
-        200: { description: 'Returns User Data' },
-        400: { description: 'Registration Failed' }
-    }
-});
+// Register route is hidden from OpenAPI schema
+
 
 authRoutes.openapi(loginRoute, async (c) => {
     const { email, password } = c.req.valid('json');
@@ -67,22 +43,26 @@ authRoutes.openapi(loginRoute, async (c) => {
     return c.json({ success: true, data });
 });
 
-authRoutes.openapi(registerRoute, async (c) => {
-    const { email, password, data: metaData } = c.req.valid('json');
-    const supabase = createSupabaseClient(c.env);
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: metaData
+authRoutes.post('/register', async (c) => {
+    try {
+        const { email, password, data: metaData } = await c.req.json();
+        const supabase = createSupabaseClient(c.env);
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: metaData
+            }
+        });
+        
+        if (error) {
+            return c.json({ success: false, message: error.message }, 400);
         }
-    });
-    
-    if (error) {
-        return c.json({ success: false, message: error.message }, 400);
+        
+        return c.json({ success: true, data });
+    } catch (e: any) {
+        return c.json({ success: false, message: 'Invalid payload' }, 400);
     }
-    
-    return c.json({ success: true, data });
 });
 
 export default authRoutes;
