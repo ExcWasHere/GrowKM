@@ -141,7 +141,7 @@ export const FEATURE_CARDS = [
   {
     id: "finance",
     icon: "💰",
-    title: "Financial Record",
+    title: "Snap Cash",
     subtitle: "Catat via Chat",
     description: "Catat keuangan lewat chat, auto-generate laporan bank",
     color: "from-yellow-400 to-amber-500",

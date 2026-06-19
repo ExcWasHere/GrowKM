@@ -158,8 +158,6 @@ const AssistantMarkdown: React.FC<{ content: string }> = ({ content }) => (
   </ReactMarkdown>
 );
 
-// ─── Delete Confirm Modal (rendered via portal to avoid clipping) ────────────
-
 interface DeleteConfirmProps {
   onConfirm: () => void;
   onCancel: () => void;
@@ -169,7 +167,6 @@ const DeleteConfirmModal: React.FC<DeleteConfirmProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  // Close on Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
@@ -228,8 +225,6 @@ const DeleteConfirmModal: React.FC<DeleteConfirmProps> = ({
   );
 };
 
-// ─── Session Item ─────────────────────────────────────────────────────────────
-
 interface SessionItemProps {
   session: ChatSession;
   isActive: boolean;
@@ -249,7 +244,6 @@ const SessionItem: React.FC<SessionItemProps> = ({
   const handleConfirmDelete = () => {
     setShowDelete(false);
     setIsDeleting(true);
-    // tunggu animasi exit selesai baru hapus dari list
     setTimeout(() => {
       onDelete();
     }, 350);
@@ -306,7 +300,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
         </button>
       </div>
 
-      {/* Portal modal — rendered outside SessionItem to avoid clipping */}
+      {/* Portal modal */}
       {showDelete && (
         <DeleteConfirmModal
           onConfirm={handleConfirmDelete}
@@ -316,8 +310,6 @@ const SessionItem: React.FC<SessionItemProps> = ({
     </>
   );
 };
-
-// ─── Chat Page ────────────────────────────────────────────────────────────────
 
 export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -519,14 +511,25 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
         ol .flex span.rounded-full { display: none; }
       `}</style>
 
-      <div className="flex gap-4 h-[calc(100vh-12rem)] md:h-[calc(100vh-10rem)]">
+      <div className="flex gap-4 h-[calc(100vh-14rem)] md:h-[calc(100vh-10rem)]">
+        {/* Sidebar backdrop */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            sidebarOpen ? "w-64 opacity-100" : "w-0 opacity-0"
-          }`}
+          className={`fixed md:relative inset-y-0 left-0 z-50 md:z-auto
+            transition-transform md:transition-all duration-300 ease-in-out
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+            ${sidebarOpen ? "md:w-64 md:opacity-100" : "md:w-0 md:opacity-0"}
+            w-72 md:overflow-hidden
+          `}
         >
-          <div className="w-64 h-full bg-white rounded-xl border border-amber-200 shadow-sm flex flex-col">
+          <div className="w-72 md:w-64 h-full bg-white md:rounded-xl border-r md:border border-amber-200 shadow-2xl md:shadow-sm flex flex-col">
             <div className="p-4 border-b border-amber-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <History size={15} className="text-amber-500" />
@@ -597,7 +600,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleToggleSidebar}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 ${
                   sidebarOpen
                     ? "bg-amber-100 text-amber-600"
                     : "bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-500"
@@ -612,22 +615,22 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
               </button>
 
               <div
-                className={`w-14 h-14 md:w-16 md:h-16 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg shrink-0`}
+                className={`w-11 h-11 md:w-16 md:h-16 rounded-xl bg-gradient-to-br ${meta.gradientClass} flex items-center justify-center shadow-lg shrink-0`}
               >
                 {React.cloneElement(
                   meta.icon as React.ReactElement<{
                     size?: number;
                     className?: string;
                   }>,
-                  { size: 28, className: "text-white" }
+                  { size: 22, className: "text-white" }
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-gray-800 text-base">Lexa AI</h2>
+                  <h2 className="font-bold text-gray-800 text-sm md:text-base">Lexa AI</h2>
                 </div>
-                <p className="text-gray-500 text-xs truncate">
+                <p className="text-gray-500 text-[11px] md:text-xs truncate">
                   Tanya apa saja soal legalitas usahamu
                 </p>
               </div>
@@ -659,32 +662,32 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 p-4">
+          <div className="flex-1 overflow-y-auto space-y-4 p-3 md:p-4">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-3 ${
+                className={`flex gap-2 md:gap-3 ${
                   msg.role === "user"
                     ? "flex-row-reverse msg-user"
                     : "flex-row msg-assistant"
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${
                     msg.role === "assistant"
                       ? "bg-gradient-to-br from-amber-400 to-orange-500 shadow-md shadow-amber-200"
                       : "bg-gray-200"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <Bot size={16} className="text-white" />
+                    <Bot size={14} className="text-white" />
                   ) : (
-                    <User size={16} className="text-gray-600" />
+                    <User size={14} className="text-gray-600" />
                   )}
                 </div>
 
                 <div
-                  className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[85%] md:max-w-[80%] px-3.5 py-2.5 md:px-4 md:py-3 rounded-2xl text-[13px] md:text-sm leading-relaxed ${
                     msg.role === "assistant"
                       ? "bg-gray-50 border border-gray-200 text-gray-800"
                       : "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 whitespace-pre-wrap"
@@ -700,9 +703,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
             ))}
 
             {loading && (
-              <div className="flex gap-3 msg-assistant">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md shadow-amber-200 flex items-center justify-center shrink-0">
-                  <Bot size={16} className="text-white" />
+              <div className="flex gap-2 md:gap-3 msg-assistant">
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md shadow-amber-200 flex items-center justify-center shrink-0">
+                  <Bot size={14} className="text-white" />
                 </div>
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-1.5">
                   <div className="typing-dot" />
@@ -715,7 +718,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
           </div>
 
           {/* Input */}
-          <div className="flex gap-3 p-4 border-t border-amber-100 shrink-0">
+          <div className="flex gap-2 md:gap-3 p-3 md:p-4 border-t border-amber-100 shrink-0">
             <input
               ref={inputRef}
               type="text"
@@ -723,12 +726,12 @@ export const ChatPage: React.FC<ChatPageProps> = ({ user, initialContext }) => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Tanya soal perizinan usahamu..."
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition-all"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 md:px-4 md:py-3 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition-all min-w-0"
             />
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || loading}
-              className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
+              className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
             >
               <Send size={18} />
             </button>
