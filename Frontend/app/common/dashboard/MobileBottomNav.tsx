@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Map, Shield, MessageCircle, DollarSign } from "lucide-react";
+import { Home, Map, Shield, MessageCircle, DollarSign, BarChart2 } from "lucide-react";
 import type { Page } from "../../components/Dashboard/types";
 
 interface MobileBottomNavProps {
@@ -13,6 +13,7 @@ const TABS = [
   { page: "scanner" as Page, label: "Scanner", icon: Shield },
   { page: "chat" as Page, label: "Chat AI", icon: MessageCircle },
   { page: "finance" as Page, label: "Keuangan", icon: DollarSign },
+  { page: "market" as Page, label: "Market", icon: BarChart2 },
 ];
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -20,21 +21,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onNavigate,
 }) => (
   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-amber-200 md:hidden z-30 shadow-lg">
-    <div className="grid grid-cols-5 gap-0.5 p-2">
+    <div className="grid grid-cols-6 gap-0.5 p-1.5">
       {TABS.map(({ page, label, icon: Icon }) => {
         const active = currentPage === page;
         return (
           <button
             key={page}
             onClick={() => onNavigate(page)}
-            className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-all ${
+            className={`flex flex-col items-center gap-0.5 py-1.5 px-0.5 rounded-lg transition-all ${
               active
                 ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
                 : "text-gray-600"
             }`}
           >
-            <Icon size={20} />
-            <span className="text-[9px] font-bold leading-none">{label}</span>
+            <Icon size={17} />
+            <span className="text-[8px] font-bold leading-none">{label}</span>
           </button>
         );
       })}

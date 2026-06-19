@@ -6,6 +6,7 @@ import {
 import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
 import { getBadges, LEVEL_CONFIG, formatBusinessType } from "../../Dashboard/constants";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
+import { CompleteProfileBanner } from "../../../common/dashboard/CompleteProfileBanner";
 
 interface DashboardPageProps {
   user: UserProfile;
@@ -35,6 +36,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
+
+       {/* Notif */}
+      {progressPercent === 0 && (
+        <CompleteProfileBanner
+          userId={user.id}
+          onComplete={() => onNavigate("profile")}
+        />
+      )}
+
         {/* Level/Progress Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
           <div className="flex items-center justify-between">
@@ -65,7 +75,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        {/* Profile Card — mobile only */}
+        {/* Profile Card mobile */}
         <ProfileCard user={user} businessProfile={businessProfile} className="lg:hidden" />
 
         {/* Feature Grid */}
@@ -74,7 +84,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         {/* Formalization Slider */}
         <FormalizationSlider businessProfile={businessProfile} />
 
-        {/* Badges — mobile only */}
+        {/* Badges mobile */}
         <BadgesCard businessProfile={businessProfile} className="lg:hidden" />
       </div>
 

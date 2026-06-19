@@ -19,7 +19,7 @@ const PAGE_TITLES: Record<Page, string> = {
   roadmap:   "Guide to Grow",
   chat:      "Tanya Lexa AI",
   scanner:   "KBLI Matcher",
-  finance:   "Financial Record",
+  finance:   "Snap Cash",
   profile:   "Business Profile",
   market:    "Market Gate",
 };
