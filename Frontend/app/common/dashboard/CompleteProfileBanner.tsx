@@ -27,9 +27,6 @@ export const CompleteProfileBanner: React.FC<CompleteProfileBannerProps> = ({
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-amber-300 bg-gradient-to-r from-amber-400 to-orange-500 p-4 md:p-5 shadow-md text-white">
-      {/* decorative blob */}
-      <div className="pointer-events-none absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
-      <div className="pointer-events-none absolute -right-2 bottom-0 w-16 h-16 rounded-full bg-white/10" />
 
       <button
         onClick={handleDismiss}
@@ -48,7 +45,7 @@ export const CompleteProfileBanner: React.FC<CompleteProfileBannerProps> = ({
             Lengkapi Profil Usahamu Yuk!
           </h4>
           <p className="text-[11px] md:text-xs text-white/90 mb-3 leading-relaxed">
-            Profil kamu masih kosong. Isi data usaha supaya rekomendasi roadmap,
+            Profil kamu masih kosong, yuk isi data usaha supaya rekomendasi roadmap,
             level usaha, dan fitur lainnya bisa lebih akurat sesuai kebutuhanmu.
           </p>
           <button
