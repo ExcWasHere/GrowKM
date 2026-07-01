@@ -33,7 +33,7 @@ const STEPS: Step[] = [
     eyebrow: "Wajib pertama",
     title: "Lengkapi profil usahamu",
     description:
-      "Klik notifikasi \u201cLengkapi Profil Sekarang\u201d di dashboard, lalu isi data usahamu selengkap-lengkapnya. Khusus deskripsi usaha, tulis kalimat yang benar-benar mencerminkan usahamu ya \u2014 makin jelas deskripsinya, makin akurat rekomendasi yang kamu dapat nanti.",
+      "Klik notifikasi \u201cLengkapi Profil Sekarang\u201d di dashboard, lalu isi data usahamu selengkap-lengkapnya. Khusus deskripsi usaha, tulis kalimat yang benar-benar mencerminkan usahamu ya makin jelas deskripsinya, makin akurat rekomendasi yang kamu dapat nanti.",
   },
   {
     id: "kbli",
@@ -150,7 +150,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-500">
             <Sparkles size={12} />
-            Jalan Pintas Memulai
+            Panduan Memulai GrowKM
           </span>
           <span className="text-[11px] font-bold text-gray-400">
             {stepIndex + 1} / {STEPS.length}
