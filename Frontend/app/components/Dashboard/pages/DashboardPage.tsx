@@ -7,6 +7,7 @@ import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
 import { getBadges, LEVEL_CONFIG, formatBusinessType } from "../../Dashboard/constants";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
 import { CompleteProfileBanner } from "../../../common/dashboard/CompleteProfileBanner";
+import { OnboardingWizard } from "../../../common/dashboard/OnBoardingWizard";
 
 interface DashboardPageProps {
   user: UserProfile;
@@ -37,15 +38,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
 
-       {/* Notif */}
+       {/* Notif lengkapi profil */}
       {progressPercent === 0 && (
         <CompleteProfileBanner
           userId={user.id}
           onComplete={() => onNavigate("profile")}
         />
       )}
+      {progressPercent === 0 && (
+        <OnboardingWizard
+          open
+          onFinish={() => onNavigate("profile")}
+        />
+      )}
 
-        {/* Level/Progress Banner */}
+        {/* Level Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -54,7 +61,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {levelCfg.label}
               </h3>
               <p className="text-xs text-gray-500">
-                {/* ✅ FIX */}
+                {/* FIX */}
                 {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
               </p>
             </div>
@@ -123,7 +130,7 @@ const ProfileCard: React.FC<{
         {businessProfile.business_name}
       </p>
       <p className="text-gray-400 text-xs font-medium mb-4 md:mb-6">
-        {/* ✅ FIX */}
+        {/* FIX */}
         {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
       </p>
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 py-3 md:py-4 rounded-lg border border-amber-100">
