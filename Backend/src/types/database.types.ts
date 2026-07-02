@@ -16,12 +16,19 @@ export type Database = {
     Tables: {
       business_profiles: {
         Row: {
+          ai_clarification_pending: boolean
+          ai_clarification_question: string | null
           bpom_image_path: string | null
           business_name: string | null
+          business_stage:
+            | Database["public"]["Enums"]["business_stage_enum"]
+            | null
           business_type: Database["public"]["Enums"]["business_type_enum"]
           city: string | null
           created_at: string
           description: string | null
+          description_quality_score: number | null
+          description_validated_at: string | null
           district: string | null
           employee_count: number
           halal_image_path: string | null
@@ -29,6 +36,7 @@ export type Database = {
           has_halal: boolean
           has_merek: boolean
           has_nib: boolean
+          has_physical_store: boolean | null
           has_pirt: boolean
           id: string
           kbli_code: string | null
@@ -38,20 +46,30 @@ export type Database = {
           nib_image_path: string | null
           onboarding_completed: boolean
           pirt_image_path: string | null
+          product_or_service_detail: string | null
           production_location: string | null
           province: string | null
+          sales_channels: string[]
           score: number
           streak_days: number
+          target_customer: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_clarification_pending?: boolean
+          ai_clarification_question?: string | null
           bpom_image_path?: string | null
           business_name?: string | null
+          business_stage?:
+            | Database["public"]["Enums"]["business_stage_enum"]
+            | null
           business_type: Database["public"]["Enums"]["business_type_enum"]
           city?: string | null
           created_at?: string
           description?: string | null
+          description_quality_score?: number | null
+          description_validated_at?: string | null
           district?: string | null
           employee_count?: number
           halal_image_path?: string | null
@@ -59,6 +77,7 @@ export type Database = {
           has_halal?: boolean
           has_merek?: boolean
           has_nib?: boolean
+          has_physical_store?: boolean | null
           has_pirt?: boolean
           id?: string
           kbli_code?: string | null
@@ -68,20 +87,30 @@ export type Database = {
           nib_image_path?: string | null
           onboarding_completed?: boolean
           pirt_image_path?: string | null
+          product_or_service_detail?: string | null
           production_location?: string | null
           province?: string | null
+          sales_channels?: string[]
           score?: number
           streak_days?: number
+          target_customer?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_clarification_pending?: boolean
+          ai_clarification_question?: string | null
           bpom_image_path?: string | null
           business_name?: string | null
+          business_stage?:
+            | Database["public"]["Enums"]["business_stage_enum"]
+            | null
           business_type?: Database["public"]["Enums"]["business_type_enum"]
           city?: string | null
           created_at?: string
           description?: string | null
+          description_quality_score?: number | null
+          description_validated_at?: string | null
           district?: string | null
           employee_count?: number
           halal_image_path?: string | null
@@ -89,6 +118,7 @@ export type Database = {
           has_halal?: boolean
           has_merek?: boolean
           has_nib?: boolean
+          has_physical_store?: boolean | null
           has_pirt?: boolean
           id?: string
           kbli_code?: string | null
@@ -98,10 +128,13 @@ export type Database = {
           nib_image_path?: string | null
           onboarding_completed?: boolean
           pirt_image_path?: string | null
+          product_or_service_detail?: string | null
           production_location?: string | null
           province?: string | null
+          sales_channels?: string[]
           score?: number
           streak_days?: number
+          target_customer?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -462,6 +495,7 @@ export type Database = {
       }
     }
     Enums: {
+      business_stage_enum: "idea" | "just_started" | "running" | "growing"
       business_type_enum:
         | "kuliner"
         | "fashion_craft"
@@ -612,6 +646,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      business_stage_enum: ["idea", "just_started", "running", "growing"],
       business_type_enum: [
         "kuliner",
         "fashion_craft",
