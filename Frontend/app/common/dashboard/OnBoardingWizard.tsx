@@ -49,7 +49,7 @@ const STEPS: Step[] = [
     eyebrow: "Panduan langkah demi langkah",
     title: "Cek roadmap di Guide to Grow",
     description:
-      "Lihat urutan izin dan sertifikasi yang perlu diselesaikan di fitur Guide to Grow, disusun sesuai level usahamu saat ini supaya nggak bingung mulai dari mana.",
+      "Lihat urutan izin dan sertifikasi yang perlu diselesaikan di fitur Guide to Grow, disusun sesuai perizinan usahamu saat ini supaya nggak bingung mulai dari mana.",
   },
   {
     id: "lexa",
