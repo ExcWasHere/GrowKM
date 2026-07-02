@@ -58,7 +58,8 @@ const BUSINESS_TYPES: { value: BusinessProfile["business_type"]; label: string }
     { value: "jasa_personal_care", label: "Jasa & Personal Care" },
     { value: "lainnya", label: "Lainnya" },
   ];
-const WILAYAH_API_BASE = "https://emsifa.github.io/api-wilayah-indonesia/api";
+const WILAYAH_API_BASE =
+  "https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api";
 
 interface WilayahOption {
   id: string;
