@@ -6,7 +6,6 @@ import {
 import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
 import { getBadges, LEVEL_CONFIG, formatBusinessType } from "../../Dashboard/constants";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
-import { CompleteProfileBanner } from "../../../common/dashboard/CompleteProfileBanner";
 import { OnboardingWizard } from "../../../common/dashboard/OnBoardingWizard";
 
 interface DashboardPageProps {
@@ -38,13 +37,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
 
-       {/* Notif lengkapi profil */}
-      {progressPercent === 0 && (
-        <CompleteProfileBanner
-          userId={user.id}
-          onComplete={() => onNavigate("profile")}
-        />
-      )}
+       {/* Wizard Panduan Pengguna */}
       {progressPercent === 0 && (
         <OnboardingWizard
           open
