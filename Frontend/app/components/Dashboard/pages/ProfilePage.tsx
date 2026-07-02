@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   User,
   Building2,
@@ -21,6 +21,8 @@ import {
   Tag,
   ShieldCheck,
   Sparkles,
+  Search,
+  Check,
 } from "lucide-react";
 import type { UserProfile, StepType } from "../../Dashboard/types";
 import type { BusinessProfile } from "../../../hooks/useUserProfile";
@@ -56,16 +58,72 @@ const BUSINESS_TYPES: { value: BusinessProfile["business_type"]; label: string }
     { value: "jasa_personal_care", label: "Jasa & Personal Care" },
     { value: "lainnya", label: "Lainnya" },
   ];
+const WILAYAH_API_BASE =
+  "https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api";
 
-const PROVINCES = [
-  "Aceh","Sumatera Utara","Sumatera Barat","Riau","Jambi","Sumatera Selatan",
-  "Bengkulu","Lampung","DKI Jakarta","Jawa Barat","Jawa Tengah","DI Yogyakarta",
-  "Jawa Timur","Banten","Bali","Nusa Tenggara Barat","Nusa Tenggara Timur",
-  "Kalimantan Barat","Kalimantan Tengah","Kalimantan Selatan","Kalimantan Timur",
-  "Sulawesi Utara","Sulawesi Tengah","Sulawesi Selatan","Sulawesi Tenggara",
-  "Maluku","Papua",
-];
-  
+interface WilayahOption {
+  id: string;
+  name: string;
+}
+
+function titleCase(raw: string): string {
+  return raw
+    .toLowerCase()
+    .split(" ")
+    .map((w) => (w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+function useWilayahList(url: string | null): {
+  data: WilayahOption[];
+  loading: boolean;
+  error: boolean;
+} {
+  const [data, setData] = useState<WilayahOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!url) {
+      setData([]);
+      setError(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Gagal memuat data (${res.status})`);
+        return res.json();
+      })
+      .then((json: { id: string; name: string }[]) => {
+        if (cancelled) return;
+        const normalized = json
+          .map((item) => ({ id: item.id, name: titleCase(item.name) }))
+          .sort((a, b) => a.name.localeCompare(b.name, "id"));
+        setData(normalized);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+          setData([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return { data, loading, error };
+}
+
 interface EditableDraft {
   business_name: string;
   business_type: BusinessProfile["business_type"];
@@ -153,8 +211,6 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   onClose,
 }) => {
   const isPdf = url.toLowerCase().includes(".pdf") || url.includes("application/pdf");
-
-  // Close on ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -333,7 +389,44 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setDraft(bpToDraft(businessProfile));
   }
 
-  // Lazy-fetch signed URLs untuk dokumen yang udah di-upload
+  const { data: provinces, loading: loadingProvinces } = useWilayahList(
+    `${WILAYAH_API_BASE}/provinces.json`,
+  );
+
+  const selectedProvinceId = useMemo(() => {
+    const q = draft.province.trim().toLowerCase();
+    if (!q) return null;
+    return provinces.find((p) => p.name.toLowerCase() === q)?.id ?? null;
+  }, [provinces, draft.province]);
+
+  const { data: regencies, loading: loadingRegencies } = useWilayahList(
+    selectedProvinceId
+      ? `${WILAYAH_API_BASE}/regencies/${selectedProvinceId}.json`
+      : null,
+  );
+
+  const selectedRegencyId = useMemo(() => {
+    const q = draft.city.trim().toLowerCase();
+    if (!q) return null;
+    return regencies.find((r) => r.name.toLowerCase() === q)?.id ?? null;
+  }, [regencies, draft.city]);
+
+  const { data: districts, loading: loadingDistricts } = useWilayahList(
+    selectedRegencyId
+      ? `${WILAYAH_API_BASE}/districts/${selectedRegencyId}.json`
+      : null,
+  );
+
+  const handleProvinceSelect = (name: string) => {
+    setDraft((prev) => ({ ...prev, province: name, city: "", district: "" }));
+  };
+  const handleCitySelect = (name: string) => {
+    setDraft((prev) => ({ ...prev, city: name, district: "" }));
+  };
+  const handleDistrictSelect = (name: string) => {
+    setDraft((prev) => ({ ...prev, district: name }));
+  };
+
   useEffect(() => {
     const pairs: [StepType, string | null | undefined][] = [
       ["nib", businessProfile.nib_image_path],
@@ -475,7 +568,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       setSaveError(msg);
     } finally {
       setUploadingStep(null);
-      // Reset input value supaya bisa pilih file yang sama lagi setelah error
       e.target.value = "";
     }
   };
@@ -723,29 +815,39 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 onChange={(v) => set("business_type", v)}
                 options={BUSINESS_TYPES}
               />
-              <SelectField
+              <WilayahSelect
                 label="Provinsi"
                 icon={<MapPin size={14} />}
                 value={draft.province}
+                options={provinces}
+                loading={loadingProvinces}
                 editing={isEditing}
-                onChange={(v) => set("province", v)}
-                options={PROVINCES.map((p) => ({ value: p, label: p }))}
+                placeholder="Cari provinsi..."
+                onSelect={handleProvinceSelect}
               />
-              <Field
+              <WilayahSelect
                 label="Kota / Kabupaten"
                 icon={<MapPin size={14} />}
                 value={draft.city}
+                options={regencies}
+                loading={loadingRegencies}
                 editing={isEditing}
-                onChange={(v) => set("city", v)}
-                placeholder="Contoh: Malang"
+                disabled={!draft.province}
+                disabledHint="Pilih provinsi dulu"
+                placeholder="Cari kota / kabupaten..."
+                onSelect={handleCitySelect}
               />
-              <Field
+              <WilayahSelect
                 label="Kecamatan"
                 icon={<MapPin size={14} />}
                 value={draft.district}
+                options={districts}
+                loading={loadingDistricts}
                 editing={isEditing}
-                onChange={(v) => set("district", v)}
-                placeholder="Contoh: Lowokwaru"
+                disabled={!draft.city}
+                disabledHint="Pilih kota / kabupaten dulu"
+                placeholder="Cari kecamatan..."
+                onSelect={handleDistrictSelect}
               />
               <Field
                 label="Lokasi Produksi"
@@ -1109,6 +1211,172 @@ const SelectField: React.FC<{
           }`}
         >
           {display || "Belum diisi"}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const WilayahSelect: React.FC<{
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  options: WilayahOption[];
+  loading: boolean;
+  editing: boolean;
+  disabled?: boolean;
+  disabledHint?: string;
+  placeholder?: string;
+  onSelect: (name: string) => void;
+}> = ({
+  label,
+  icon,
+  value,
+  options,
+  loading,
+  editing,
+  disabled = false,
+  disabledHint,
+  placeholder = "Cari...",
+  onSelect,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      return;
+    }
+    const onClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
+    const t = setTimeout(() => searchRef.current?.focus(), 50);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
+      clearTimeout(t);
+    };
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => o.name.toLowerCase().includes(q));
+  }, [options, query]);
+
+  if (!editing) {
+    return (
+      <div>
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+          <span className="text-amber-400">{icon}</span>
+          {label}
+        </label>
+        <div
+          className={`px-3 py-2 rounded-lg border text-sm font-medium ${
+            value
+              ? "bg-white border-amber-100 text-gray-800"
+              : "bg-gray-50 border-gray-100 text-gray-400 italic"
+          }`}
+        >
+          {value || "Belum diisi"}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+        <span className="text-amber-400">{icon}</span>
+        {label}
+      </label>
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm font-medium text-left transition-colors ${
+          disabled
+            ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
+            : open
+            ? "bg-amber-50 border-amber-300 ring-2 ring-amber-300 text-gray-800"
+            : "bg-amber-50 border-amber-200 text-gray-800 hover:border-amber-300"
+        }`}
+      >
+        <span className={`truncate ${!value && !disabled ? "text-gray-400 italic" : ""}`}>
+          {disabled ? disabledHint : value || `Pilih ${label.toLowerCase()}`}
+        </span>
+        {loading ? (
+          <Loader2 size={14} className="animate-spin text-amber-500 shrink-0" />
+        ) : (
+          <ChevronDown
+            size={14}
+            className={`text-gray-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute z-20 mt-1.5 w-full bg-white rounded-xl border border-amber-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-100 bg-amber-50/50">
+            <Search size={14} className="text-amber-400 shrink-0" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              className="w-full bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+            />
+          </div>
+
+          <div className="max-h-56 overflow-y-auto py-1">
+            {loading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+                <Loader2 size={14} className="animate-spin" />
+                Memuat data...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="py-6 text-center text-xs text-gray-400">
+                Tidak ditemukan
+              </div>
+            ) : (
+              filtered.map((opt) => {
+                const isSelected =
+                  opt.name.toLowerCase() === value.trim().toLowerCase();
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(opt.name);
+                      setOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                      isSelected
+                        ? "bg-amber-100 text-amber-700 font-bold"
+                        : "text-gray-700 hover:bg-amber-50"
+                    }`}
+                  >
+                    <span className="truncate">{opt.name}</span>
+                    {isSelected && (
+                      <Check size={14} className="text-amber-500 shrink-0" />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
