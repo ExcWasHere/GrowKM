@@ -88,6 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <button
+        data-tour="profile"
         onClick={() => {
           onNavigate("profile");
           if (isMobile) onClose();
@@ -105,6 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={page}
+              data-tour={page}
               onClick={() => {
                 onNavigate(page);
                 if (isMobile) onClose();
@@ -151,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }`}
           style={{ width: "18rem" }}
         >
-          {/* wider mobile variant */}
+          {/* mobile */}
           <div
             className="h-screen flex flex-col bg-white border-r border-amber-200 p-5 w-72"
             style={{ fontFamily: "Inter, sans-serif" }}
@@ -181,6 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             <button
+              data-tour="profile"
               onClick={() => {
                 onNavigate("profile");
                 if (isMobile) onClose();
@@ -197,6 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return (
                   <button
                     key={page}
+                    data-tour={page}
                     onClick={() => {
                       onNavigate(page);
                       onClose();
