@@ -1,12 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Award, Check, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  CheckCircle, X, ZoomIn,
+  Award,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
-import { getBadges, LEVEL_CONFIG, formatBusinessType } from "../../Dashboard/constants";
+import {
+  getBadges,
+  LEVEL_CONFIG,
+  formatBusinessType,
+} from "../../Dashboard/constants";
 import { FeatureGrid } from "../../../common/dashboard/FeatureGrid";
-import { OnboardingWizard } from "../../../common/dashboard/OnBoardingWizard";
+import { ProductTour } from "../../../common/dashboard/ProductTour";
 
 interface DashboardPageProps {
   user: UserProfile;
@@ -30,20 +41,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     businessProfile.has_merek,
   ];
   const progressPercent = Math.round(
-    (certFlags.filter(Boolean).length / certFlags.length) * 100
+    (certFlags.filter(Boolean).length / certFlags.length) * 100,
   );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
-
-       {/* Wizard Panduan Pengguna */}
-      {progressPercent === 0 && (
-        <OnboardingWizard
-          open
-          onFinish={() => onNavigate("profile")}
-        />
-      )}
+        {/* Product Tour */}
+        {progressPercent === 0 && (
+          <ProductTour open onFinish={() => onNavigate("profile")} />
+        )}
 
         {/* Level Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
@@ -54,8 +61,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 {levelCfg.label}
               </h3>
               <p className="text-xs text-gray-500">
-                {/* FIX */}
-                {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
+                {formatBusinessType(businessProfile.business_type)} •{" "}
+                {businessProfile.city}
               </p>
             </div>
             <div className="text-right">
@@ -75,16 +82,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        {/* Profile Card mobile */}
-        <ProfileCard user={user} businessProfile={businessProfile} className="lg:hidden" />
+        {/* Profile Card */}
+        <ProfileCard
+          user={user}
+          businessProfile={businessProfile}
+          className="lg:hidden"
+        />
 
         {/* Feature Grid */}
         <FeatureGrid onNavigate={onNavigate} />
 
-        {/* Formalization Slider */}
+        {/* Formalization */}
         <FormalizationSlider businessProfile={businessProfile} />
 
-        {/* Badges mobile */}
+        {/* mobile */}
         <BadgesCard businessProfile={businessProfile} className="lg:hidden" />
       </div>
 
@@ -124,7 +135,8 @@ const ProfileCard: React.FC<{
       </p>
       <p className="text-gray-400 text-xs font-medium mb-4 md:mb-6">
         {/* FIX */}
-        {formatBusinessType(businessProfile.business_type)} • {businessProfile.city}
+        {formatBusinessType(businessProfile.business_type)} •{" "}
+        {businessProfile.city}
       </p>
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 py-3 md:py-4 rounded-lg border border-amber-100">
         <p className="text-[9px] uppercase font-bold text-amber-500 mb-1">
@@ -181,9 +193,13 @@ const BadgesCard: React.FC<{
         className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-bold text-amber-600 hover:text-orange-500 transition-colors"
       >
         {expanded ? (
-          <><ChevronUp size={14} /> Sembunyikan</>
+          <>
+            <ChevronUp size={14} /> Sembunyikan
+          </>
         ) : (
-          <><ChevronDown size={14} /> Lihat {badges.length - 3} lainnya</>
+          <>
+            <ChevronDown size={14} /> Lihat {badges.length - 3} lainnya
+          </>
         )}
       </button>
     </div>
@@ -191,11 +207,15 @@ const BadgesCard: React.FC<{
 };
 
 const CERT_LIST = [
-  { key: "has_nib",   label: "NIB",            desc: "Nomor Induk Berusaha"          },
-  { key: "has_pirt",  label: "SPP-IRT / PIRT", desc: "Izin pangan rumah tangga"      },
-  { key: "has_halal", label: "Halal",           desc: "Sertifikat Halal MUI / BPJPH" },
-  { key: "has_bpom",  label: "BPOM",            desc: "Izin edar BPOM"               },
-  { key: "has_merek", label: "Merek",           desc: "Pendaftaran merek DJKI"        },
+  { key: "has_nib", label: "NIB", desc: "Nomor Induk Berusaha" },
+  {
+    key: "has_pirt",
+    label: "SPP-IRT / PIRT",
+    desc: "Izin pangan rumah tangga",
+  },
+  { key: "has_halal", label: "Halal", desc: "Sertifikat Halal MUI / BPJPH" },
+  { key: "has_bpom", label: "BPOM", desc: "Izin edar BPOM" },
+  { key: "has_merek", label: "Merek", desc: "Pendaftaran merek DJKI" },
 ] as const;
 
 interface FormalizationSliderProps {
@@ -223,7 +243,10 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
 
   const totalPages = Math.ceil(CERT_LIST.length / perPage);
   const safePage = Math.min(page, totalPages - 1);
-  const slice = CERT_LIST.slice(safePage * perPage, safePage * perPage + perPage);
+  const slice = CERT_LIST.slice(
+    safePage * perPage,
+    safePage * perPage + perPage,
+  );
 
   const earnedCount = CERT_LIST.filter((c) => businessProfile[c.key]).length;
 
@@ -257,7 +280,9 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
               <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                 <CheckCircle size={12} className="text-white" />
               </div>
-              <p className="text-[11px] font-bold text-green-800 leading-tight">{label}</p>
+              <p className="text-[11px] font-bold text-green-800 leading-tight">
+                {label}
+              </p>
               <p className="text-[9px] text-green-600 leading-tight">{desc}</p>
             </div>
           ) : (
@@ -266,7 +291,9 @@ export const FormalizationSlider: React.FC<FormalizationSliderProps> = ({
               className="rounded-xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2 p-3 text-center"
               style={{ aspectRatio: "1 / 1.1" }}
             >
-              <p className="text-[11px] font-bold text-gray-700 leading-tight">{label}</p>
+              <p className="text-[11px] font-bold text-gray-700 leading-tight">
+                {label}
+              </p>
               <p className="text-[9px] text-gray-400 leading-tight">{desc}</p>
               <span className="text-[9px] text-gray-400 border border-dashed border-gray-300 rounded-full px-2 py-0.5 mt-0.5">
                 Belum selesai
