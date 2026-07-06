@@ -43,6 +43,7 @@ const handleLogout = async () => {
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
       localStorage.removeItem("business_profile");
+      sessionStorage.removeItem("growkm_tour_seen");
     }
     window.location.href = "/";
   }

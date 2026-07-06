@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useState, useLayoutEffect, useRef, useCallback, useEffect } from "react";
 import {
   Home,
   User,
@@ -99,6 +99,11 @@ const GAP = 14;
 const TOOLTIP_WIDTH = 300;
 const TOOLTIP_FALLBACK_HEIGHT = 200;
 
+/** Event name used to ask the parent layout to open/close the Sidebar
+ *  while the tour is active. Listen for this in whichever component
+ *  owns the Sidebar's `isOpen` state. e.detail.open: boolean */
+export const TOUR_SIDEBAR_EVENT = "growkm:tour-sidebar";
+
 type Placement = "right" | "left" | "bottom" | "top" | "center";
 
 interface Positioned {
@@ -181,6 +186,20 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
     setPos(computePosition(r, tooltipH));
   }, [step.target]);
 
+  // Ask the layout to open the sidebar while the tour is running,
+  // and close it again once the tour unmounts.
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(
+      new CustomEvent(TOUR_SIDEBAR_EVENT, { detail: { open: true } })
+    );
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent(TOUR_SIDEBAR_EVENT, { detail: { open: false } })
+      );
+    };
+  }, [open]);
+
   useLayoutEffect(() => {
     if (!open) return;
     recalc();
@@ -258,6 +277,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
         />
       )}
       <div className="fixed inset-0" />
+
       {/* Tooltip card */}
       <div
         ref={tooltipRef}
@@ -266,23 +286,24 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
       >
         <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400" />
 
-        <button
-          onClick={onFinish}
-          aria-label="Lewati tur"
-          className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-        >
-          <X size={14} />
-        </button>
-
-        <div className="p-4 md:p-5 pr-10">
+        <div className="p-4 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-500">
               <Sparkles size={12} />
               Tur GrowKM
             </span>
-            <span className="text-[11px] font-bold text-gray-400">
-              {stepIndex + 1} / {TOUR_STEPS.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-gray-400">
+                {stepIndex + 1} / {TOUR_STEPS.length}
+              </span>
+              <button
+                onClick={onFinish}
+                aria-label="Lewati tur"
+                className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X size={13} />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 mb-4">
