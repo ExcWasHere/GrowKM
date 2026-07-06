@@ -41,16 +41,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     businessProfile.has_merek,
   ];
   const progressPercent = Math.round(
-    (certFlags.filter(Boolean).length / certFlags.length) * 100,
+    (certFlags.filter(Boolean).length / certFlags.length) * 100
   );
+
+  const [tourDismissed, setTourDismissed] = useState<boolean>(
+    () => typeof window !== "undefined" && sessionStorage.getItem("growkm_tour_seen") === "1"
+  );
+
+  const handleTourFinish = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("growkm_tour_seen", "1");
+    }
+    setTourDismissed(true);
+    onNavigate("profile");
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
       <div className="lg:col-span-8 space-y-4 md:space-y-6">
-        {/* Product Tour */}
-        {progressPercent === 0 && (
-          <ProductTour open onFinish={() => onNavigate("profile")} />
-        )}
+
+       {/* Product Tour */}
+      {progressPercent === 0 && !tourDismissed && (
+        <ProductTour
+          open
+          onFinish={handleTourFinish}
+        />
+      )}
 
         {/* Level Banner */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-amber-200 shadow-sm">
