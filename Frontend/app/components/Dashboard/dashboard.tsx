@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Menu, Loader2, AlertCircle } from "lucide-react";
 import type { Page } from "./types";
@@ -13,6 +13,7 @@ import { ScannerPage } from "../../components/Dashboard/pages/ScannerPage";
 import { FinancePage } from "../../components/Dashboard/pages/FinancePage";
 import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage";
 import { MarketPage } from "../../components/Dashboard/pages/MarketGate";
+import { TOUR_SIDEBAR_EVENT } from "../../common/dashboard/ProductTour";
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
@@ -71,6 +72,24 @@ export default function GrowKMDashboard() {
       subscription.unsubscribe();
     };
   }, [navigate]);
+  const isSidebarOpenRef = useRef(isSidebarOpen);
+  useEffect(() => {
+    isSidebarOpenRef.current = isSidebarOpen;
+  }, [isSidebarOpen]);
+  const wasSidebarOpenBeforeTourRef = useRef(false);
+  useEffect(() => {
+    const handleTourSidebar = (e: Event) => {
+      const custom = e as CustomEvent<{ open: boolean }>;
+      if (custom.detail.open) {
+        wasSidebarOpenBeforeTourRef.current = isSidebarOpenRef.current;
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(wasSidebarOpenBeforeTourRef.current);
+      }
+    };
+    window.addEventListener(TOUR_SIDEBAR_EVENT, handleTourSidebar);
+    return () => window.removeEventListener(TOUR_SIDEBAR_EVENT, handleTourSidebar);
+  }, []);
 
   if (isCheckingAuth) {
     return (
