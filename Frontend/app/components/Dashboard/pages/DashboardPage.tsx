@@ -7,8 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
-  X,
-  ZoomIn,
 } from "lucide-react";
 import type { UserProfile, BusinessProfile, Page } from "../../Dashboard/types";
 import {
@@ -102,6 +100,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <ProfileCard
           user={user}
           businessProfile={businessProfile}
+          onNavigate={onNavigate}
           className="lg:hidden"
         />
 
@@ -117,7 +116,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* Sidebar */}
       <div className="hidden lg:flex lg:col-span-4 flex-col gap-6">
-        <ProfileCard user={user} businessProfile={businessProfile} />
+        <ProfileCard
+          user={user}
+          businessProfile={businessProfile}
+          onNavigate={onNavigate}
+        />
         <BadgesCard businessProfile={businessProfile} />
       </div>
     </div>
@@ -127,8 +130,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 const ProfileCard: React.FC<{
   user: UserProfile;
   businessProfile: BusinessProfile;
+  onNavigate: (page: Page) => void;
   className?: string;
-}> = ({ user, businessProfile, className = "" }) => {
+}> = ({ user, businessProfile, onNavigate, className = "" }) => {
   const level = businessProfile.level ?? "starter";
   const levelCfg = LEVEL_CONFIG[level];
 
@@ -140,9 +144,14 @@ const ProfileCard: React.FC<{
       <p className="text-amber-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-4 md:mb-6">
         Profil Usaha
       </p>
-      <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full border-4 border-amber-100 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl md:text-3xl font-bold shadow-lg">
+      <button
+        data-tour="profile"
+        onClick={() => onNavigate("profile")}
+        aria-label="Lengkapi profil usaha"
+        className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full border-4 border-amber-100 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl md:text-3xl font-bold shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+      >
         {user.name.charAt(0)}
-      </div>
+      </button>
       <h4 className="font-bold text-base md:text-lg text-gray-800 mb-1">
         {user.name}
       </h4>
@@ -150,7 +159,6 @@ const ProfileCard: React.FC<{
         {businessProfile.business_name}
       </p>
       <p className="text-gray-400 text-xs font-medium mb-4 md:mb-6">
-        {/* FIX */}
         {formatBusinessType(businessProfile.business_type)} •{" "}
         {businessProfile.city}
       </p>

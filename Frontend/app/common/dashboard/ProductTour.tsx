@@ -175,7 +175,18 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
   const StepIcon = step.icon;
 
   const recalc = useCallback(() => {
-    const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+    const candidates = document.querySelectorAll<HTMLElement>(
+      `[data-tour="${step.target}"]`
+    );
+    let el: HTMLElement | null = null;
+    for (const c of Array.from(candidates)) {
+      const candidateRect = c.getBoundingClientRect();
+      if (candidateRect.width > 0 && candidateRect.height > 0) {
+        el = c;
+        break;
+      }
+    }
+
     const r = el ? el.getBoundingClientRect() : null;
     setRect(r);
     const tooltipH = tooltipRef.current?.offsetHeight || TOOLTIP_FALLBACK_HEIGHT;
