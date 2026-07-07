@@ -98,10 +98,6 @@ const MARGIN = 12;
 const GAP = 14;
 const TOOLTIP_WIDTH = 300;
 const TOOLTIP_FALLBACK_HEIGHT = 200;
-
-/** Event name used to ask the parent layout to open/close the Sidebar
- *  while the tour is active. Listen for this in whichever component
- *  owns the Sidebar's `isOpen` state. e.detail.open: boolean */
 export const TOUR_SIDEBAR_EVENT = "growkm:tour-sidebar";
 
 type Placement = "right" | "left" | "bottom" | "top" | "center";
@@ -186,8 +182,6 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
     setPos(computePosition(r, tooltipH));
   }, [step.target]);
 
-  // Ask the layout to open the sidebar while the tour is running,
-  // and close it again once the tour unmounts.
   useEffect(() => {
     if (!open) return;
     window.dispatchEvent(
@@ -289,8 +283,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({ open, onFinish }) => {
         <div className="p-4 md:p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-500">
-              <Sparkles size={12} />
-              Tur GrowKM
+              Kenalan sama GrowKM yuk!
             </span>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold text-gray-400">
