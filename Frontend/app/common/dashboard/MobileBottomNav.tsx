@@ -8,12 +8,12 @@ interface MobileBottomNavProps {
 }
 
 const TABS = [
-  { page: "dashboard" as Page, label: "Beranda", icon: Home },
-  { page: "roadmap" as Page, label: "Roadmap", icon: Map },
-  { page: "scanner" as Page, label: "Scanner", icon: Shield },
-  { page: "chat" as Page, label: "Chat AI", icon: MessageCircle },
-  { page: "finance" as Page, label: "Keuangan", icon: DollarSign },
-  { page: "market" as Page, label: "Market", icon: BarChart2 },
+  { page: "dashboard" as Page, label: "Home", icon: Home },
+  { page: "roadmap" as Page, label: "Guide to Grow", icon: Map },
+  { page: "scanner" as Page, label: "KBLI Matcher", icon: Shield },
+  { page: "chat" as Page, label: "Lexa AI", icon: MessageCircle },
+  { page: "finance" as Page, label: "Snap Cash", icon: DollarSign },
+  { page: "market" as Page, label: "Market Gate", icon: BarChart2 },
 ];
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -27,6 +27,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         return (
           <button
             key={page}
+            data-tour={page}
             onClick={() => onNavigate(page)}
             className={`flex flex-col items-center gap-0.5 py-1.5 px-0.5 rounded-lg transition-all ${
               active
