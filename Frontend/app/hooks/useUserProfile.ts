@@ -57,7 +57,7 @@ const STEP_META: Record<
     description:
       "Daftarkan usahamu secara legal melalui OSS. NIB adalah syarat utama untuk semua izin usaha lainnya.",
     cost: "Gratis",
-    duration: "1–3 hari kerja",
+    duration: "1-3 hari kerja",
     platform: "oss.go.id",
     icon: "🏛️",
   },
@@ -65,8 +65,8 @@ const STEP_META: Record<
     label: "SPP-IRT / PIRT",
     description:
       "Izin produksi pangan skala rumah tangga dari Dinas Kesehatan setempat. Wajib untuk produk makanan & minuman.",
-    cost: "Rp 0 – Rp 300rb",
-    duration: "14–30 hari kerja",
+    cost: "Rp 0 - Rp 300rb",
+    duration: "14-30 hari kerja",
     platform: "Dinas Kesehatan Kota/Kab",
     icon: "🍽️",
   },
@@ -75,7 +75,7 @@ const STEP_META: Record<
     description:
       "Sertifikat halal dari BPJPH/MUI untuk meningkatkan kepercayaan konsumen muslim.",
     cost: "Gratis (self-declare) / Rp 650rb+",
-    duration: "14–90 hari",
+    duration: "14-90 hari",
     platform: "ptsp.halal.go.id",
     icon: "☪️",
   },
@@ -83,8 +83,8 @@ const STEP_META: Record<
     label: "Izin Edar BPOM",
     description:
       "Nomor izin edar dari BPOM untuk produk olahan yang dijual lintas provinsi atau di ritel modern.",
-    cost: "Rp 100rb – Rp 500rb",
-    duration: "30–90 hari",
+    cost: "Rp 100rb - Rp 500rb",
+    duration: "30-90 hari",
     platform: "e-reg.pom.go.id",
     icon: "💊",
   },
@@ -92,8 +92,8 @@ const STEP_META: Record<
     label: "Pendaftaran Merek",
     description:
       "Lindungi brand usahamu secara hukum melalui DJKI Kemenkumham.",
-    cost: "Rp 500rb – Rp 2jt",
-    duration: "12–24 bulan",
+    cost: "Rp 500rb - Rp 2jt",
+    duration: "12-24 bulan",
     platform: "merek.dgip.go.id",
     icon: "™️",
   },
@@ -159,6 +159,15 @@ interface RoadmapStatusResponse {
   data: {
     steps: RoadmapStep[];
     progress_percentage: number;
+  };
+}
+
+interface ValidateDescriptionResponse {
+  status: string;
+  message: string;
+  data: {
+    is_valid: boolean;
+    feedback: string;
   };
 }
 
@@ -230,7 +239,7 @@ export function useUserProfile() {
       setError(null);
       const prev = businessProfile;
       const next = { ...prev, ...updates };
-      setBusinessProfile(next); // optimistic
+      setBusinessProfile(next);
 
       try {
         const res = await apiFetch("/api/users/business-profile", {
@@ -294,8 +303,6 @@ export function useUserProfile() {
     [],
   );
 
-  // ── Document upload (multipart) ────────────────────────────────────────────
-
   const uploadDocument = useCallback(
     async (stepType: StepType, file: File): Promise<{ path: string; signed_url: string }> => {
       const formData = new FormData();
@@ -320,7 +327,6 @@ export function useUserProfile() {
         signed_url: string;
       };
 
-      // Update local state — backend udah simpan path ke DB
       const colMap: Record<StepType, keyof BusinessProfile> = {
         nib:     "nib_image_path",
         spp_irt: "pirt_image_path",
@@ -371,6 +377,24 @@ export function useUserProfile() {
     [],
   );
 
+  const validateDescription = useCallback(
+    async (description: string): Promise<{ is_valid: boolean; feedback: string }> => {
+      const res = await apiFetch("/api/onboarding/validate-description", {
+        method: "POST",
+        body: JSON.stringify({ description }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.statusText);
+        throw new Error(`Validasi gagal (${res.status}): ${text}`);
+      }
+
+      const json: ValidateDescriptionResponse = await res.json();
+      return json.data;
+    },
+    [],
+  );
+
   return {
     userProfile,
     businessProfile,
@@ -386,6 +410,7 @@ export function useUserProfile() {
     uploadDocument,
     getDocumentSignedUrl,
     deleteDocument,
+    validateDescription,
     refetch: fetchAll,
   };
 }
