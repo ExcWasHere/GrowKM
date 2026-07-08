@@ -23,6 +23,8 @@ import {
   Sparkles,
   Search,
   Check,
+  Trash2,
+  Wand2,
 } from "lucide-react";
 import type { UserProfile, StepType } from "../../Dashboard/types";
 import type { BusinessProfile } from "../../../hooks/useUserProfile";
@@ -41,6 +43,10 @@ interface ProfilePageProps {
     file: File,
   ) => Promise<{ path: string; signed_url: string }>;
   onGetDocumentSignedUrl: (stepType: StepType) => Promise<string | null>;
+  onDeleteDocument: (stepType: StepType) => Promise<void>;
+  onValidateDescription: (
+    description: string,
+  ) => Promise<{ is_valid: boolean; feedback: string }>;
 }
 
 const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
@@ -292,11 +298,9 @@ const KbliConfirmModal: React.FC<KbliModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl border border-amber-200 w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Top accent */}
         <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 to-orange-500" />
 
         <div className="p-6">
-          {/* Icon + title */}
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
               <Sparkles size={20} className="text-white" />
@@ -308,8 +312,6 @@ const KbliConfirmModal: React.FC<KbliModalProps> = ({
               <p className="text-xs text-gray-500">dari AI berdasarkan deskripsi usahamu</p>
             </div>
           </div>
-
-          {/* KBLI badge */}
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-center">
             <p className="text-xs text-amber-600 font-semibold uppercase tracking-widest mb-1">
               Kode KBLI
@@ -366,6 +368,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   roadmapProgress,
   onUploadDocument,
   onGetDocumentSignedUrl,
+  onDeleteDocument,
+  onValidateDescription,
 }) => {
   const levelCfg = LEVEL_CONFIG[businessProfile.level?.toUpperCase() as keyof typeof LEVEL_CONFIG] ?? LEVEL_CONFIG.STARTER;
   const [isEditing, setIsEditing] = useState(false);
@@ -380,8 +384,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [signedUrls, setSignedUrls] = useState<Partial<Record<StepType, string>>>({});
   const [uploadingStep, setUploadingStep] = useState<StepType | null>(null);
+  const [deletingStep, setDeletingStep] = useState<StepType | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLabel, setPreviewLabel] = useState<string>("");
+  const [validatingDesc, setValidatingDesc] = useState(false);
+  const [descValidation, setDescValidation] = useState<{
+    is_valid: boolean;
+    feedback: string;
+  } | null>(null);
 
   const prevBp = useRef(businessProfile);
   if (prevBp.current !== businessProfile && !isEditing) {
@@ -457,6 +467,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setSaved(false);
     setSaveError(null);
     setKbliConfirmed(false);
+    setDescValidation(null);
   };
 
   const handleSave = async () => {
@@ -495,6 +506,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setIsEditing(false);
     setSaveError(null);
     setPendingKbli(null);
+    setDescValidation(null);
   };
   const handleKbliConfirm = async () => {
     if (!pendingKbli) return;
@@ -572,9 +584,52 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     }
   };
 
+  const handleDeleteCert = async (
+    stepType: StepType,
+    certKey: keyof EditableDraft,
+  ) => {
+    setDeletingStep(stepType);
+    setSaveError(null);
+    try {
+      await onDeleteDocument(stepType);
+      setSignedUrls((prev) => {
+        const next = { ...prev };
+        delete next[stepType];
+        return next;
+      });
+      setDraft((prev) => ({ ...prev, [certKey]: false }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal menghapus dokumen";
+      setSaveError(msg);
+    } finally {
+      setDeletingStep(null);
+    }
+  };
+
+  const handleValidateDescription = async () => {
+    if (!draft.description || draft.description.trim().length < 10) {
+      setDescValidation({
+        is_valid: false,
+        feedback: "Deskripsi minimal 10 karakter ya, ceritakan usahamu lebih detail.",
+      });
+      return;
+    }
+    setValidatingDesc(true);
+    setDescValidation(null);
+    try {
+      const result = await onValidateDescription(draft.description);
+      setDescValidation(result);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Gagal memvalidasi deskripsi";
+      setSaveError(msg);
+    } finally {
+      setValidatingDesc(false);
+    }
+  };
+
   return (
     <>
-      {/* KBLI Confirmation Modal */}
       {pendingKbli && (
         <KbliConfirmModal
           kbliCode={pendingKbli}
@@ -583,7 +638,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         />
       )}
 
-      {/* Document Preview Lightbox */}
       {previewUrl && (
         <DocumentPreviewModal
           url={previewUrl}
@@ -598,7 +652,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
         {/* LEFT COLUMN */}
         <div className="lg:col-span-4 space-y-4 md:space-y-6">
-          {/* Avatar + Level */}
           <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
             <div className="h-1 w-full bg-gradient-to-r from-amber-400 to-orange-500" />
             <div className="p-6 flex flex-col items-center text-center">
@@ -707,7 +760,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 space-y-4 md:space-y-6">
-          {/* Success toast */}
           {saved && (
             <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 shadow-sm">
               <CheckCircle size={18} className="text-green-500 shrink-0" />
@@ -888,10 +940,52 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   icon={<FileText size={14} />}
                   value={draft.description}
                   editing={isEditing}
-                  onChange={(v) => set("description", v)}
+                  onChange={(v) => {
+                    set("description", v);
+                    if (descValidation) setDescValidation(null);
+                  }}
                   placeholder="Ceritakan usaha Anda secara singkat..."
                   multiline
                 />
+                {isEditing && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={handleValidateDescription}
+                      disabled={validatingDesc}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors disabled:opacity-60"
+                    >
+                      {validatingDesc ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          Memvalidasi...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 size={13} />
+                          Validasi dengan AI
+                        </>
+                      )}
+                    </button>
+
+                    {descValidation && (
+                      <div
+                        className={`flex items-start gap-2 mt-2 px-3 py-2 rounded-lg border text-xs font-medium ${
+                          descValidation.is_valid
+                            ? "bg-green-50 border-green-200 text-green-700"
+                            : "bg-amber-50 border-amber-200 text-amber-700"
+                        }`}
+                      >
+                        {descValidation.is_valid ? (
+                          <CheckCircle size={14} className="shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                        )}
+                        <span>{descValidation.feedback}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <Field
@@ -932,6 +1026,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   : (businessProfile[key] as boolean);
                 const signedUrl = signedUrls[stepType];
                 const isUploading = uploadingStep === stepType;
+                const isDeleting = deletingStep === stepType;
                 const inputId = `file-input-${stepType}`;
 
                 return (
@@ -970,32 +1065,54 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                           </div>
                         ) : signedUrl ? (
                           <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPreviewUrl(signedUrl);
-                                setPreviewLabel(label);
-                              }}
-                              className="block w-full group/preview"
-                              title="Klik untuk preview"
-                            >
-                              <img
-                                src={signedUrl}
-                                alt={`Bukti ${label}`}
-                                className="w-full h-20 object-cover rounded-lg border border-green-200 group-hover/preview:border-amber-400 transition-colors"
-                              />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                fileInputRefs.current[stepType]?.click();
-                              }}
-                              className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-amber-500 hover:text-white text-amber-600 rounded-full shadow-md border border-amber-200 transition-colors"
-                              title="Ganti file"
-                            >
-                              <Upload size={12} />
-                            </button>
+                            {isDeleting ? (
+                              <div className="flex items-center justify-center gap-1.5 w-full h-20 rounded-lg border border-red-200 bg-red-50 text-xs text-red-500">
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Menghapus...</span>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreviewUrl(signedUrl);
+                                  setPreviewLabel(label);
+                                }}
+                                className="block w-full group/preview"
+                                title="Klik untuk preview"
+                              >
+                                <img
+                                  src={signedUrl}
+                                  alt={`Bukti ${label}`}
+                                  className="w-full h-20 object-cover rounded-lg border border-green-200 group-hover/preview:border-amber-400 transition-colors"
+                                />
+                              </button>
+                            )}
+                            <div className="absolute top-1 right-1 flex gap-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  fileInputRefs.current[stepType]?.click();
+                                }}
+                                disabled={isDeleting}
+                                className="w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-amber-500 hover:text-white text-amber-600 rounded-full shadow-md border border-amber-200 transition-colors disabled:opacity-50"
+                                title="Ganti file"
+                              >
+                                <Upload size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCert(stepType, key as keyof EditableDraft);
+                                }}
+                                disabled={isDeleting}
+                                className="w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-red-500 hover:text-white text-red-500 rounded-full shadow-md border border-red-200 transition-colors disabled:opacity-50"
+                                title="Hapus dokumen"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
                             <p className="text-[10px] text-green-600 font-semibold mt-1 text-center">
                               Klik gambar untuk preview
                             </p>

@@ -8,8 +8,6 @@ export const apiFetch = async (
 ) => {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
-
-  // Don't force Content-Type for FormData — browser must set multipart boundary itself
   const isFormData = options.body instanceof FormData;
 
   const headers = {
