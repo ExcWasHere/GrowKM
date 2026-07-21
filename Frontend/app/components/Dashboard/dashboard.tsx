@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Menu, Loader2, AlertCircle } from "lucide-react";
+import { Menu, Loader2, AlertCircle, LogOut } from "lucide-react";
 import type { Page } from "./types";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { supabase } from "../../lib/supabase";
-import { Sidebar } from "../../common/dashboard/sidebar";
+import { Sidebar, handleLogout } from "../../common/dashboard/sidebar";
 import { MobileBottomNav } from "../../common/dashboard/MobileBottomNav";
 import { DashboardPage } from "../../components/Dashboard/pages/DashboardPage";
 import { RoadmapPage } from "../../components/Dashboard/pages/RoadmapPage";
@@ -13,22 +13,23 @@ import { ScannerPage } from "../../components/Dashboard/pages/ScannerPage";
 import { FinancePage } from "../../components/Dashboard/pages/FinancePage";
 import { ProfilePage } from "../../components/Dashboard/pages/ProfilePage";
 import { MarketPage } from "../../components/Dashboard/pages/MarketGate";
+import { TOUR_SIDEBAR_EVENT } from "../../common/dashboard/ProductTour";
 
 const PAGE_TITLES: Record<Page, string> = {
   dashboard: "Beranda GrowKM",
-  roadmap:   "Guide to Grow",
-  chat:      "Tanya Lexa AI",
-  scanner:   "KBLI Matcher",
-  finance:   "Snap Cash",
-  profile:   "Business Profile",
-  market:    "Market Gate",
+  roadmap: "Guide to Grow",
+  chat: "Tanya Lexa AI",
+  scanner: "KBLI Matcher",
+  finance: "Snap Cash",
+  profile: "Business Profile",
+  market: "Market Gate",
 };
 
 export default function GrowKMDashboard() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [currentPage, setCurrentPage]     = useState<Page>("dashboard");
-  const [chatContext, setChatContext]      = useState<string | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+  const [chatContext, setChatContext] = useState<string | undefined>(undefined);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const {
@@ -43,15 +44,21 @@ export default function GrowKMDashboard() {
     refetch,
     uploadDocument,
     getDocumentSignedUrl,
+    deleteDocument,
+    validateDescription,
   } = useUserProfile();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       if (!session?.user) {
         const currentPath = window.location.pathname;
-        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, {
+          replace: true,
+        });
         return;
       }
 
@@ -60,10 +67,14 @@ export default function GrowKMDashboard() {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         const currentPath = window.location.pathname;
-        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+        navigate(`/sign-in?redirect=${encodeURIComponent(currentPath)}`, {
+          replace: true,
+        });
       }
     });
 
@@ -71,6 +82,25 @@ export default function GrowKMDashboard() {
       subscription.unsubscribe();
     };
   }, [navigate]);
+  const isSidebarOpenRef = useRef(isSidebarOpen);
+  useEffect(() => {
+    isSidebarOpenRef.current = isSidebarOpen;
+  }, [isSidebarOpen]);
+  const wasSidebarOpenBeforeTourRef = useRef(false);
+  useEffect(() => {
+    const handleTourSidebar = (e: Event) => {
+      const custom = e as CustomEvent<{ open: boolean }>;
+      if (custom.detail.open) {
+        wasSidebarOpenBeforeTourRef.current = isSidebarOpenRef.current;
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(wasSidebarOpenBeforeTourRef.current);
+      }
+    };
+    window.addEventListener(TOUR_SIDEBAR_EVENT, handleTourSidebar);
+    return () =>
+      window.removeEventListener(TOUR_SIDEBAR_EVENT, handleTourSidebar);
+  }, []);
 
   if (isCheckingAuth) {
     return (
@@ -132,10 +162,14 @@ export default function GrowKMDashboard() {
             roadmapProgress={roadmapProgress}
             onUploadDocument={uploadDocument}
             onGetDocumentSignedUrl={getDocumentSignedUrl}
+            onDeleteDocument={deleteDocument}
+            onValidateDescription={validateDescription}
           />
         );
       case "market":
-        return <MarketPage user={userProfile} businessProfile={businessProfile} />;
+        return (
+          <MarketPage user={userProfile} businessProfile={businessProfile} />
+        );
     }
   };
 
@@ -143,10 +177,15 @@ export default function GrowKMDashboard() {
     return (
       <div
         className="flex items-center justify-center min-h-screen gap-3"
-        style={{ backgroundImage: 'url("/latar-belakang.svg")', backgroundSize: "cover" }}
+        style={{
+          backgroundImage: 'url("/latar-belakang.svg")',
+          backgroundSize: "cover",
+        }}
       >
         <Loader2 size={28} className="animate-spin text-amber-500" />
-        <span className="text-sm font-semibold text-gray-500">Memuat profil...</span>
+        <span className="text-sm font-semibold text-gray-500">
+          Memuat profil...
+        </span>
       </div>
     );
   }
@@ -155,7 +194,10 @@ export default function GrowKMDashboard() {
     return (
       <div
         className="flex items-center justify-center min-h-screen"
-        style={{ backgroundImage: 'url("/latar-belakang.svg")', backgroundSize: "cover" }}
+        style={{
+          backgroundImage: 'url("/latar-belakang.svg")',
+          backgroundSize: "cover",
+        }}
       >
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-4 shadow-sm max-w-sm">
           <AlertCircle size={20} className="text-red-500 shrink-0" />
@@ -185,23 +227,12 @@ export default function GrowKMDashboard() {
         backgroundSize: "cover",
       }}
     >
-      <div className="hidden md:block">
-        <Sidebar
-          user={userProfile}
-          isOpen={isSidebarOpen}
-          currentPage={currentPage}
-          onNavigate={handleNavigate}
-          onClose={() => setIsSidebarOpen(false)}
-        />
-      </div>
-
       <Sidebar
         user={userProfile}
         isOpen={isSidebarOpen}
         currentPage={currentPage}
         onNavigate={handleNavigate}
         onClose={() => setIsSidebarOpen(false)}
-        isMobile
       />
 
       <main
@@ -209,21 +240,34 @@ export default function GrowKMDashboard() {
           isSidebarOpen ? "md:ml-56" : "md:ml-0"
         }`}
       >
-        <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-10">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 md:p-2.5 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-all group shadow-sm"
-          >
-            <Menu size={20} className="text-amber-500 group-hover:text-orange-500" />
-          </button>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent uppercase">
-              {PAGE_TITLES[currentPage]}
-            </h1>
-            <p className="text-xs md:text-sm text-gray-600 font-medium">
-              Solusi Digital untuk UMKM Indonesia
-            </p>
+        <div className="flex items-center justify-between gap-3 md:gap-4 mb-6 md:mb-10">
+          <div className="flex items-center gap-3 md:gap-4">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="hidden md:flex p-2 md:p-2.5 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-all group shadow-sm"
+            >
+              <Menu
+                size={20}
+                className="text-amber-500 group-hover:text-orange-500"
+              />
+            </button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent uppercase">
+                {PAGE_TITLES[currentPage]}
+              </h1>
+              <p className="text-xs md:text-sm text-gray-600 font-medium">
+                Solusi Digital untuk UMKM Indonesia
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            aria-label="Keluar"
+            className="md:hidden p-2.5 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-all shadow-sm shrink-0"
+          >
+            <LogOut size={18} className="text-red-500" />
+          </button>
         </div>
 
         {renderPage()}
