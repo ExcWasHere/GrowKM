@@ -8,15 +8,12 @@ import { ChatMessage } from '../../repositories/chat.repository';
 import * as userRepository from '../../repositories/user.repository';
 import { embedQuery } from '../ai/embedding.service';
 import { retrieveChunks, RetrievedChunk } from '../ai/retrieval.service';
-import { getOpenAIClient } from '../../config/openai';
+import { askAIText } from '../../utils/ai.util';
 
 type StepType = Database['public']['Enums']['step_type_enum'];
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
 
-const DEPLOYMENT = 'gpt-4.1-mini';
-const MAX_HISTORY_MESSAGES = 10;
-
-const TITLE_DEPLOYMENT = 'gpt-4.1-mini';
+const MAX_HISTORY_MESSAGES = 20;
 
 export interface ChatResult {
     session_id: string;
@@ -77,24 +74,20 @@ ATURAN ANTI OFF-TOPIC (WAJIB DITAATI):
 
 // Generates a short title from the first user message + AI response (fire-and-forget)
 async function generateTitle(
-    openai: OpenAI,
+    env: Partial<EnvBindings>,
     userMessage: string,
     aiResponse: string,
 ): Promise<string> {
-    const completion = await openai.chat.completions.create({
-        model: TITLE_DEPLOYMENT,
-        messages: [
-            {
-                role: 'system',
-                content: 'Generate a short, descriptive Indonesian title (max 6 words) for this conversation. Return ONLY the title, no quotes, no punctuation at the end.',
-            },
-            { role: 'user', content: userMessage },
-            { role: 'assistant', content: aiResponse },
-        ],
-        temperature: 0.5,
-        max_tokens: 20,
-    });
-    return completion.choices[0]?.message?.content?.trim() ?? 'Percakapan Baru';
+    const title = await askAIText(env, [
+        {
+            role: 'system',
+            content: 'Generate a short, descriptive Indonesian title (max 6 words) for this conversation. Return ONLY the title, no quotes, no punctuation at the end.',
+        },
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: aiResponse },
+    ], 0.5, 20);
+    
+    return title || 'Percakapan Baru';
 }
 
 // Core chat function — auto-creates a session if no session_id provided, then runs RAG + LLM
@@ -137,14 +130,7 @@ export const chat = async (
     ];
 
     // 6. Call Azure OpenAI (non-streaming for MVP simplicity)
-    const openai = getOpenAIClient(env);
-    const completion = await openai.chat.completions.create({
-        model: DEPLOYMENT,
-        messages: llmMessages,
-        temperature: 0.3,
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content ?? 'Maaf, saya tidak dapat menghasilkan respons saat ini.';
+    const aiResponse = await askAIText(env, llmMessages, 0.3) || 'Maaf, saya tidak dapat menghasilkan respons saat ini.';
 
     // 7. Persist both messages to the session
     const userMsg: ChatMessage = { role: 'user', content: userMessage, timestamp: new Date().toISOString() };
@@ -154,7 +140,7 @@ export const chat = async (
     // 8. Fire-and-forget: generate session title only for new sessions (first message)
     const isNewSession = !sessionId;
     if (isNewSession) {
-        generateTitle(openai, userMessage, aiResponse)
+        generateTitle(env, userMessage, aiResponse)
             .then(title => chatRepository.updateSessionTitle(supabase, session.id, title))
             .catch(err => console.error('[TitleGen] Failed to generate session title:', err));
     }

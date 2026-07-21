@@ -3,7 +3,7 @@ import { Database } from '../../types/database.types';
 import { EnvBindings } from '../../types/env';
 import { embedQuery } from '../ai/embedding.service';
 import { retrieveChunks, RetrievedChunk } from '../ai/retrieval.service';
-import { getOpenAIClient } from '../../config/openai';
+import { askAIJson } from '../../utils/ai.util';
 
 const DEPLOYMENT = 'gpt-4.1-mini';
 
@@ -76,21 +76,13 @@ export const matchKBLI = async (
         };
     }
 
-    const openai = getOpenAIClient(env);
-    const completion = await openai.chat.completions.create({
-        model: DEPLOYMENT,
-        response_format: { type: 'json_object' },
-        messages: [
-            { role: 'system', content: buildSystemPrompt(chunks, businessType) },
-            { role: 'user', content: `Deskripsi usaha: "${description}"` },
-        ],
-        temperature: 0.1,
-    });
-
-    const raw = completion.choices[0]?.message?.content ?? '{}';
-
+    let result: Omit<KBLIMatchResult, 'mismatch_alert'>;
     try {
-        const result = JSON.parse(raw) as Omit<KBLIMatchResult, 'mismatch_alert'>;
+        result = await askAIJson<Omit<KBLIMatchResult, 'mismatch_alert'>>(
+            env,
+            buildSystemPrompt(chunks, businessType),
+            `Deskripsi usaha: "${description}"`
+        );
 
         // Condition B: user supplied their own kbli_code — detect mismatch
         const mismatch_alert: KBLIMismatchAlert | null =
@@ -103,7 +95,7 @@ export const matchKBLI = async (
                 : null;
 
         return { ...result, mismatch_alert };
-    } catch {
-        throw new Error(`Failed to parse KBLI match result: ${raw}`);
+    } catch (error: any) {
+        throw new Error(`Failed to parse KBLI match result: ${error.message}`);
     }
 };

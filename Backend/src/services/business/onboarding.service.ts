@@ -1,5 +1,5 @@
 import { EnvBindings } from '../../types/env';
-import { getOpenAIClient } from '../../config/openai';
+import { askAIJson } from '../../utils/ai.util';
 
 const SYSTEM_PROMPT = `Kamu adalah validator usaha UMKM Indonesia.
 Tugasmu menilai apakah deskripsi produk atau jasa yang diberikan cukup jelas untuk menentukan kode KBLI (Klasifikasi Baku Lapangan Usaha Indonesia).
@@ -17,24 +17,14 @@ export const validateDescription = async (
     description: string,
     env: Partial<EnvBindings>,
 ): Promise<{ is_valid: boolean; feedback?: string }> => {
-    const openai = getOpenAIClient(env);
-    const deploymentName = env.AZURE_OPENAI_DEPLOYMENT_NAME ?? process.env.AZURE_OPENAI_DEPLOYMENT_NAME ?? 'gpt-4.1-mini';
-
-    const completion = await openai.chat.completions.create({
-        model: deploymentName,
-        messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: `Deskripsi usaha: "${description}"` },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.1,
-        max_tokens: 150,
-    });
-
-    const raw = completion.choices[0]?.message?.content ?? '{}';
-
     try {
-        return JSON.parse(raw);
+        return await askAIJson<{ is_valid: boolean; feedback?: string }>(
+            env,
+            SYSTEM_PROMPT,
+            `Deskripsi usaha: "${description}"`,
+            0.1,
+            150
+        );
     } catch {
         return { is_valid: true };
     }

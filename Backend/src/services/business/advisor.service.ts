@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../types/database.types';
 import * as retrievalService from '../ai/retrieval.service';
-import { getOpenAIClient } from '../../config/openai';
+import { askAIJson } from '../../utils/ai.util';
 
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
 type StepType = Database['public']['Enums']['step_type_enum'];
@@ -129,9 +129,6 @@ export async function generateRecommendations(
     chunks: KnowledgeChunk[],
     env: Partial<{ AZURE_OPENAI_API_KEY: string; AZURE_OPENAI_ENDPOINT: string; AZURE_OPENAI_DEPLOYMENT_NAME: string }>,
 ): Promise<Recommendation[]> {
-    const openai = getOpenAIClient(env);
-    const deploymentName = env.AZURE_OPENAI_DEPLOYMENT_NAME ?? process.env.AZURE_OPENAI_DEPLOYMENT_NAME ?? 'gpt-4.1-mini';
-
     // Build match status context for LLM
     const matchContext = matchSnapshot.map(m => {
         const missingLabel = m.missing_steps.length > 0 ? `missing: ${m.missing_steps.join(', ')}` : 'eligible';
@@ -193,21 +190,14 @@ ${chunksContext}
 Berikan TOP 3 rekomendasi peluang bisnis untuk user ini, urut dari prioritas tertinggi.
 `.trim();
 
-    const completion = await openai.chat.completions.create({
-        model: deploymentName,
-        messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' },
-    });
+    const parsed = await askAIJson<{ recommendations: LLMRecommendation[] }>(
+        env,
+        systemPrompt,
+        userPrompt,
+        0.3,
+        1500
+    );
 
-    const rawOutput = completion.choices[0]?.message?.content;
-    if (!rawOutput) throw new Error('LLM returned empty response');
-
-    const parsed = JSON.parse(rawOutput) as { recommendations: LLMRecommendation[] };
     if (!parsed.recommendations || !Array.isArray(parsed.recommendations)) {
         throw new Error('LLM output missing recommendations array');
     }

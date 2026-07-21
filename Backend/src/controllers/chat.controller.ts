@@ -7,13 +7,7 @@ import * as chatService from '../services/business/chat.service';
 import { HonoEnv } from '../types/env';
 import { Database } from '../types/database.types';
 
-type StepType = Database['public']['Enums']['step_type_enum'];
-
-interface ChatRequestBody {
-    message: string;
-    session_id?: string;
-    context_step_type?: StepType;
-}
+import { ChatRequestBody } from '../schemas/chat.schema';
 
 // POST /api/chat
 export const handleChat = async (c: Context<HonoEnv>) => {
