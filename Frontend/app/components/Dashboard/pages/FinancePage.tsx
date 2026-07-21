@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Flame, Loader2, Download, TrendingUp } from "lucide-react";
+import {
+  Send,
+  Flame,
+  Loader2,
+  Download,
+  TrendingUp,
+  Paperclip,
+  X,
+  ImageIcon,
+} from "lucide-react";
 import type { UserProfile } from "../../Dashboard/types";
 import { CARD_META } from "../../../common/dashboard/featureMeta";
 import { apiFetch } from "../../../lib/api";
@@ -30,8 +39,14 @@ interface DailySummary {
 interface FinanceMessage {
   role: "user" | "system";
   content: string;
+  images?: string[]; // preview URLs (blob or public)
   transactions?: Transaction[];
   daily_summary?: DailySummary;
+}
+
+interface SelectedFile {
+  file: File;
+  previewUrl: string; // blob URL for instant preview
 }
 
 const fmtRp = (n: number) =>
@@ -43,16 +58,44 @@ const fmtRp = (n: number) =>
 
 const todayStr = () => new Date().toISOString().split("T")[0];
 
+/** Upload a single file: get presigned URL, PUT to R2, return public_url */
+async function uploadFileToR2(file: File): Promise<string> {
+  const presignRes = await apiFetch("/api/upload/presigned-url", {
+    method: "POST",
+    body: JSON.stringify({
+      file_name: file.name,
+      content_type: file.type,
+      folder: "receipts",
+    }),
+  });
+
+  if (!presignRes.ok) throw new Error("Gagal mendapatkan presigned URL");
+
+  const { data } = await presignRes.json();
+
+  // PUT file directly to R2 (no auth header needed, it's a presigned URL)
+  const putRes = await fetch(data.upload_url, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type },
+  });
+
+  if (!putRes.ok) throw new Error("Gagal mengunggah gambar ke storage");
+
+  return data.public_url as string;
+}
+
 export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
   const meta = CARD_META["finance"];
 
   const [messages, setMessages] = useState<FinanceMessage[]>([
     {
       role: "system",
-      content: `Halo ${user.name}! Ceritakan transaksi harianmu, misalnya:\n\n"Hari ini jual 20 porsi nasi @25rb. Belanja bahan 180rb."`,
+      content: `Halo ${user.name}! Ceritakan transaksi harianmu atau lampirkan foto nota/struk.\n\nContoh:\n"Hari ini jual 20 porsi nasi @25rb. Belanja bahan 180rb."`,
     },
   ]);
   const [input, setInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [sending, setSending] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
   const [downloadingExcel, setDownloadingExcel] = useState(false);
@@ -68,10 +111,18 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
+
+  // cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      selectedFiles.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));
+    };
+  }, [selectedFiles]);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -98,18 +149,67 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
     fetchSummary();
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+
+    const newSelected: SelectedFile[] = files.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setSelectedFiles((prev) => [...prev, ...newSelected]);
+    // reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const send = useCallback(async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    const hasFiles = selectedFiles.length > 0;
 
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    if ((!text && !hasFiles) || sending) return;
+
+    // Immediately show user bubble with blob preview images
+    const previewImages = selectedFiles.map((sf) => sf.previewUrl);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: text || "📎 Foto nota/struk",
+        images: previewImages.length > 0 ? previewImages : undefined,
+      },
+    ]);
     setInput("");
+    const filesToUpload = [...selectedFiles];
+    setSelectedFiles([]);
     setSending(true);
 
     try {
+      // Phase 1: upload all files in parallel
+      let imageUrls: string[] = [];
+      if (filesToUpload.length > 0) {
+        imageUrls = await Promise.all(
+          filesToUpload.map((sf) => uploadFileToR2(sf.file)),
+        );
+        // revoke blobs now that upload is done
+        filesToUpload.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));
+      }
+
+      // Phase 2: send to SnapCash
       const res = await apiFetch("/api/finance/record", {
         method: "POST",
-        body: JSON.stringify({ message: text, record_date: todayStr() }),
+        body: JSON.stringify({
+          message: text || "Tolong ekstrak transaksi dari gambar nota ini.",
+          record_date: todayStr(),
+          ...(imageUrls.length > 0 && { images: imageUrls }),
+        }),
       });
 
       if (!res.ok) {
@@ -149,7 +249,7 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
       setSending(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input, sending]);
+  }, [input, selectedFiles, sending]);
 
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -180,6 +280,8 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
     }
   };
 
+  const canSend = (input.trim().length > 0 || selectedFiles.length > 0) && !sending;
+
   return (
     <div className="space-y-4">
       {/* Header card */}
@@ -205,7 +307,7 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
                   Snap Cash
                 </h2>
                 <p className="text-gray-500 text-xs md:text-sm mt-0.5">
-                  Catat keuangan via chat, auto laporan bank
+                  Catat keuangan via chat atau foto nota langsung
                 </p>
               </div>
               <button
@@ -289,21 +391,71 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
           <div ref={bottomRef} />
         </div>
 
+        {/* Image previews */}
+        {selectedFiles.length > 0 && (
+          <div className="px-3 md:px-4 pt-2 flex gap-2 flex-wrap border-t border-amber-100">
+            {selectedFiles.map((sf, i) => (
+              <div key={i} className="relative group shrink-0">
+                <img
+                  src={sf.previewUrl}
+                  alt={sf.file.name}
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-gray-200"
+                />
+                <button
+                  onClick={() => removeFile(i)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                >
+                  <X size={11} />
+                </button>
+                <div className="absolute bottom-1 left-1 right-1 text-[9px] text-white font-semibold truncate bg-black/40 rounded px-1">
+                  {sf.file.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Input bar */}
-        <div className="flex gap-2 p-3 md:p-4 border-t border-amber-100">
+        <div className="flex items-end gap-2 p-3 md:p-4 border-t border-amber-100">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {/* Attach button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+            title="Lampirkan foto nota"
+            className="w-10 h-10 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-amber-600 transition-all shrink-0 disabled:opacity-40 active:scale-95"
+          >
+            <Paperclip size={16} />
+          </button>
+
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Ceritakan transaksi harimu..."
+            placeholder={
+              selectedFiles.length > 0
+                ? "Tambah keterangan (opsional)..."
+                : "Ceritakan transaksi harimu..."
+            }
             disabled={sending}
             className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 md:px-4 py-2.5 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-amber-400 transition-colors disabled:opacity-60"
           />
+
+          {/* Send button */}
           <button
             onClick={send}
-            disabled={!input.trim() || sending}
+            disabled={!canSend}
             className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white hover:shadow-lg active:scale-95 transition-all disabled:opacity-40 shrink-0"
           >
             {sending ? (
@@ -317,6 +469,8 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
     </div>
   );
 };
+
+/* ───────────────────────── Sub-components ───────────────────────── */
 
 const StatPill: React.FC<{
   label: string;
@@ -362,6 +516,31 @@ const MessageRow: React.FC<{ msg: FinanceMessage }> = ({ msg }) => (
         }`}
       >
         {msg.content}
+
+        {/* Image thumbnails inside user bubble */}
+        {msg.images && msg.images.length > 0 && (
+          <div className={`mt-2 flex flex-wrap gap-1.5 ${msg.images.length === 1 ? "" : ""}`}>
+            {msg.images.map((url, i) =>
+              url.startsWith("blob:") ? (
+                // blob preview (instant)
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Lampiran ${i + 1}`}
+                  className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl border-2 border-white/30"
+                />
+              ) : (
+                // public URL (after upload)
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-xl border-2 border-white/30 bg-white/20 flex flex-col items-center justify-center gap-1 text-white/80 hover:bg-white/30 transition-colors">
+                    <ImageIcon size={22} />
+                    <span className="text-[9px] font-semibold">Lihat Gambar</span>
+                  </div>
+                </a>
+              )
+            )}
+          </div>
+        )}
       </div>
     </div>
 

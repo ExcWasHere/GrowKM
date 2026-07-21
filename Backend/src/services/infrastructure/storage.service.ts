@@ -12,13 +12,18 @@ export const storageService = {
         folder: string = 'receipts'
     ) {
         try {
+            const endpoint = env.R2_ENDPOINT ?? process.env.R2_ENDPOINT!;
+            const accessKeyId = env.R2_ACCESS_KEY_ID ?? process.env.R2_ACCESS_KEY_ID!;
+            const secretAccessKey = env.R2_SECRET_ACCESS_KEY ?? process.env.R2_SECRET_ACCESS_KEY!;
+            const bucketName = env.R2_BUCKET_NAME ?? process.env.R2_BUCKET_NAME!;
+            const publicUrlBase = env.R2_PUBLIC_URL ?? process.env.R2_PUBLIC_URL!;
 
             const s3Client = new S3Client({
                 region: 'auto',
-                endpoint: env.R2_ENDPOINT!,
+                endpoint: endpoint,
                 credentials: {
-                    accessKeyId: env.R2_ACCESS_KEY_ID!,
-                    secretAccessKey: env.R2_SECRET_ACCESS_KEY!,
+                    accessKeyId: accessKeyId,
+                    secretAccessKey: secretAccessKey,
                 },
             });
 
@@ -26,13 +31,13 @@ export const storageService = {
 
             // generate a presigned URL for uploading the file
             const command = new PutObjectCommand({
-                Bucket: env.R2_BUCKET_NAME!,
+                Bucket: bucketName,
                 Key: uniqueFileName,
                 ContentType: contentType,
             });
 
             const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
-            const publicUrl = `${env.R2_PUBLIC_URL}/${uniqueFileName}`;
+            const publicUrl = `${publicUrlBase}/${uniqueFileName}`;
 
             return {
                 uploadUrl,
