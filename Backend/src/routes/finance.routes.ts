@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
-import * as financeController from '../controllers/finance.controller';
+import * as financeController from '../controllers/snapcash.controller';
 import { z } from '@hono/zod-openapi';
 import { HonoEnv } from '../types/env';
 import {
@@ -11,7 +11,7 @@ import {
     getSummaryResponseSchema,
     getReportQuerySchema,
     getReportResponseSchema
-} from '../schemas/finance.schema';
+} from '../schemas/snapcash.schema';
 
 const financeRoutes = new OpenAPIHono<HonoEnv>();
 

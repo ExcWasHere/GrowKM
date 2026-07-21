@@ -1,26 +1,29 @@
 import { Context } from 'hono';
 import { HonoEnv } from '../types/env';
-import * as financeService from '../services/business/finance.service';
+import { RecordTransactionBody, GetRecordsQuery, GetSummaryQuery, GetReportQuery } from '../schemas/snapcash.schema';
+import { getAuthClient, getUserId } from '../middlewares/auth.middleware';
+import * as snapCashService from '../services/business/snapcash.service';
 import * as excelService from '../services/business/excel.service';
 import * as userRepository from '../repositories/user.repository';
 import { AppError } from '../middlewares/error.middleware';
 
-export const handleRecordTransaction = async (c: any) => {
-    const userId = c.get('userId');
-    const supabase = c.get('supabase');
+export const handleRecordTransaction = async (c: Context<HonoEnv>) => {
+    const userId = getUserId(c);
+    const supabase = getAuthClient(c);
     const env = c.env;
-    const body = c.req.valid('json');
+    const body = (await c.req.json()) as RecordTransactionBody;
 
     const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
     if (!businessProfile) throw new AppError(404, 'Business profile not found');
 
-    const result = await financeService.recordTransaction(
+    const result = await snapCashService.recordTransaction(
         supabase,
         env,
         userId,
         businessProfile,
         body.message,
-        body.record_date
+        body.record_date,
+        body.images
     );
 
     return c.json({
@@ -30,15 +33,15 @@ export const handleRecordTransaction = async (c: any) => {
     }, 200);
 };
 
-export const handleGetRecords = async (c: any) => {
-    const userId = c.get('userId');
-    const supabase = c.get('supabase');
-    const query = c.req.valid('query');
+export const handleGetRecords = async (c: Context<HonoEnv>) => {
+    const userId = getUserId(c);
+    const supabase = getAuthClient(c);
+    const query = (c.req.query() as unknown) as GetRecordsQuery;
 
     const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
     if (!businessProfile) throw new AppError(404, 'Business profile not found');
 
-    const result = await financeService.getRecords(
+    const result = await snapCashService.getRecords(
         supabase,
         businessProfile,
         query.start_date,
@@ -52,15 +55,15 @@ export const handleGetRecords = async (c: any) => {
     }, 200);
 };
 
-export const handleGetSummary = async (c: any) => {
-    const userId = c.get('userId');
-    const supabase = c.get('supabase');
-    const query = c.req.valid('query');
+export const handleGetSummary = async (c: Context<HonoEnv>) => {
+    const userId = getUserId(c);
+    const supabase = getAuthClient(c);
+    const query = (c.req.query() as unknown) as GetSummaryQuery;
 
     const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
     if (!businessProfile) throw new AppError(404, 'Business profile not found');
 
-    const result = await financeService.getSummary(
+    const result = await snapCashService.getSummary(
         supabase,
         businessProfile,
         query.period,
@@ -75,15 +78,15 @@ export const handleGetSummary = async (c: any) => {
     }, 200);
 };
 
-export const handleGetReport = async (c: any) => {
-    const userId = c.get('userId');
-    const supabase = c.get('supabase');
-    const query = c.req.valid('query');
+export const handleGetReport = async (c: Context<HonoEnv>) => {
+    const userId = getUserId(c);
+    const supabase = getAuthClient(c);
+    const query = (c.req.query() as unknown) as GetReportQuery;
 
     const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
     if (!businessProfile) throw new AppError(404, 'Business profile not found');
 
-    const result = await financeService.getReport(
+    const result = await snapCashService.getReport(
         supabase,
         businessProfile,
         query.year,
@@ -96,15 +99,15 @@ export const handleGetReport = async (c: any) => {
     }, 200);
 };
 
-export const handleGetReportExcel = async (c: any) => {
-    const userId = c.get('userId');
-    const supabase = c.get('supabase');
-    const query = c.req.valid('query');
+export const handleGetReportExcel = async (c: Context<HonoEnv>) => {
+    const userId = getUserId(c);
+    const supabase = getAuthClient(c);
+    const query = (c.req.query() as unknown) as GetReportQuery;
 
     const businessProfile = await userRepository.getBusinessProfileByUserId(supabase, userId);
     if (!businessProfile) throw new AppError(404, 'Business profile not found');
 
-    const reportData = await financeService.getReport(
+    const reportData = await snapCashService.getReport(
         supabase,
         businessProfile,
         query.year,
@@ -115,7 +118,7 @@ export const handleGetReportExcel = async (c: any) => {
 
     const filename = `Laporan_Keuangan_${businessProfile.business_name?.replace(/\s+/g, '_') || 'Usaha'}_${reportData.period.replace('/', '_')}.xlsx`;
 
-    return c.body(buffer, 200, {
+    return c.body(buffer as any, 200, {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${filename}"`
     });

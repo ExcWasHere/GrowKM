@@ -10,6 +10,11 @@ export type EnvBindings = {
     AZURE_OPENAI_API_KEY: string;
     AZURE_OPENAI_ENDPOINT: string;
     AZURE_OPENAI_DEPLOYMENT_NAME: string;
+    R2_ENDPOINT: string;                                                                                                                                                                                 
+    R2_ACCESS_KEY_ID: string;                                                                                                                                                                            
+    R2_SECRET_ACCESS_KEY: string;                                                                                                                                                                        
+    R2_BUCKET_NAME: string;                                                                                                                                                                              
+    R2_PUBLIC_URL: string;                                                                                                       
 };
 
 export type HonoEnv = {

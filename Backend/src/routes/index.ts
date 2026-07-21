@@ -6,6 +6,7 @@ import chatRoutes from './chat.routes';
 import opportunityRoutes from './opportunity.routes';
 import financeRoutes from './finance.routes';
 import onboardingRoutes from './onboarding.routes';
+import uploadRoutes from './upload.routes';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { HonoEnv } from '../types/env';
 
@@ -22,5 +23,6 @@ router.route('/chat', chatRoutes);
 router.route('/opportunities', opportunityRoutes);
 router.route('/finance', financeRoutes);
 router.route('/onboarding', onboardingRoutes);
+router.route('/upload', uploadRoutes);
 
 export default router;

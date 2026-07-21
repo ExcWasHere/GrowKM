@@ -17,6 +17,7 @@ export const transactionSchema = z.object({
 export const recordTransactionBodySchema = z.object({
     message: z.string().min(2).openapi({ example: 'Jual 20 porsi nasi @25rb. Belanja bahan 180rb.' }),
     record_date: z.string().optional().openapi({ example: '2026-06-16' }), // YYYY-MM-DD
+    images: z.array(z.string().url()).optional().openapi({ example: ['https://pub-r2.com/nota.jpg'] }),
 }).openapi('RecordTransactionBody');
 
 export const recordTransactionResponseSchema = z.object({

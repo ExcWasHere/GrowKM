@@ -1,12 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../types/database.types';
 import { EnvBindings } from '../../types/env';
-import { getOpenAIClient } from '../../config/openai';
+import { askAIJson } from '../../utils/ai.util';
 import * as financeRepo from '../../repositories/finance.repository';
 import { AppError } from '../../middlewares/error.middleware';
-import { RecordTransactionResponse } from '../../schemas/finance.schema';
-
-const PARSER_DEPLOYMENT = 'gpt-4.1-mini';
+import { RecordTransactionResponse } from '../../schemas/snapcash.schema';
 
 type BusinessProfile = Database['public']['Tables']['business_profiles']['Row'];
 
@@ -112,32 +110,39 @@ export const recordTransaction = async (
     userId: string,
     businessProfile: BusinessProfile,
     message: string,
-    recordDateInput?: string
+    recordDateInput?: string,
+    imageUrls?: string[]
 ): Promise<RecordTransactionResponse> => {
     // 1. Get current date (WIB approx)
     const recordDate = recordDateInput || new Date(new Date().getTime() + 7 * 3600 * 1000).toISOString().split('T')[0];
 
     // 2. Call Azure OpenAI to parse
-    const openai = getOpenAIClient(env);
-    const completion = await openai.chat.completions.create({
-        model: PARSER_DEPLOYMENT,
-        response_format: { type: 'json_object' }, // Use json_object but ask for array in an object? Actually json_object requires an object. Wait, let's wrap array in an object to be safe.
-        // Wait, if response_format is json_object, the prompt must ask for a JSON object.
-        messages: [
-            { role: 'system', content: buildParserPrompt(businessProfile.business_type).replace('FORMAT (JSON Array):\n[', 'FORMAT (JSON Object):\n{ "transactions": [').replace(']\n', ']\n}') },
-            { role: 'user', content: message },
-        ],
-        temperature: 0.1,
-    });
+    const systemPrompt = buildParserPrompt(businessProfile.business_type).replace('FORMAT (JSON Array):\n[', 'FORMAT (JSON Object):\n{ "transactions": [').replace(']\n', ']\n}');
+    
+    // Merge image URLs into the message if provided
+    let payloadMessage: any = message;
+    if (imageUrls && imageUrls.length > 0) {
+        payloadMessage = [
+            { type: "text", text: `Pesan User: "${message}"\n\nTolong baca gambar struk/nota terlampir dan gabungkan dengan instruksi teks di atas.` }
+        ];
+        for (const url of imageUrls) {
+            payloadMessage.push({ type: "image_url", image_url: { url: url } });
+        }
+    }
 
-    const rawAI = completion.choices[0]?.message?.content || '{ "transactions": [] }';
     let parsedTransactions: ParsedTransaction[] = [];
+    
     try {
-        const parsed = JSON.parse(rawAI);
+        const parsed = await askAIJson<{ transactions: ParsedTransaction[] }>(
+            env,
+            systemPrompt,
+            payloadMessage, 
+            0.1
+        );
         parsedTransactions = parsed.transactions || parsed; // Handle both array and object wrapper
         if (!Array.isArray(parsedTransactions)) parsedTransactions = [];
     } catch (err) {
-        console.error('[SnapCash] Parsing error:', rawAI);
+        console.error('[SnapCash] Parsing error:', err);
         throw new AppError(400, 'Gagal memahami pesan. Pastikan menyebutkan nominal transaksi.');
     }
 
