@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../../types/database.types';
 import { EnvBindings } from '../../types/env';
 import { askAIJson } from '../../utils/ai.util';
-import * as financeRepo from '../../repositories/finance.repository';
+import * as financeRepo from '../../repositories/snapcash.repository';
 import { AppError } from '../../middlewares/error.middleware';
 import { RecordTransactionResponse } from '../../schemas/snapcash.schema';
 

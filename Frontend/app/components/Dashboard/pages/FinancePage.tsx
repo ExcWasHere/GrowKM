@@ -202,9 +202,15 @@ export const FinancePage: React.FC<FinancePageProps> = ({ user }) => {
         filesToUpload.forEach((sf) => URL.revokeObjectURL(sf.previewUrl));
       }
 
+      // Generate unique Idempotency-Key for this transaction
+      const idempotencyKey = crypto.randomUUID();
+
       // Phase 2: send to SnapCash
       const res = await apiFetch("/api/finance/record", {
         method: "POST",
+        headers: {
+            "x-idempotency-key": idempotencyKey
+        },
         body: JSON.stringify({
           message: text || "Tolong ekstrak transaksi dari gambar nota ini.",
           record_date: todayStr(),
